@@ -5,7 +5,6 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -93,16 +92,11 @@ public class LoginActivity extends Activity {
     }
 
     private void authenticate() {
-        chooseAccount();
-        if (chromiumAccount != null) {
-            getToken();
-        }
-    }
-
-    private void chooseAccount() {
-        this.chromiumAccount = getChromiumAccount(this);
+        initializeChromiumAccount();
         if (chromiumAccount == null) {
             startAddGoogleAccountIntent();
+        } else {
+            getToken();
         }
     }
 
@@ -147,18 +141,14 @@ public class LoginActivity extends Activity {
         }
     }
 
-    private static Account getChromiumAccount(Context context) {
-        AccountManager mAccountManager = AccountManager.get(context);
-
-        Account[] accounts = mAccountManager.getAccountsByType(GOOGLE_ACCOUNT_TYPE);
+    private void initializeChromiumAccount() {
+        Account[] accounts = accountManager.getAccountsByType(GOOGLE_ACCOUNT_TYPE);
         String[] names = new String[accounts.length];
         for (int i = 0; i < names.length; i++) {
             if (accounts[i].name.endsWith(CHROMIUM_EMAIL)) {
-                return accounts[i];
+                chromiumAccount = accounts[i];
             }
         }
-
-        return null;
     }
 
 }
