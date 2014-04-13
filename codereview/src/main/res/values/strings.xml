@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Codereview</string>
+    <string name="title_issue_detail">Issue Detail</string>
+    <string name="title_activity_code_review_login">CodeReviewLoginActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+</resources>
