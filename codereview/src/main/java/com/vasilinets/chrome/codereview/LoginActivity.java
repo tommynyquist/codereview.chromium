@@ -1,6 +1,5 @@
 package com.vasilinets.chrome.codereview;
 
-import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
@@ -12,6 +11,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.widget.TextView;
+
+import com.vasilinets.chrome.codereview.model.AccountSettings;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -27,8 +28,6 @@ import java.io.IOException;
 public class LoginActivity extends Activity {
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
-    private static final String CHROMIUM_EMAIL = "@chromium.org";
-    private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
     private static final String TOKEN_TYPE = "ah";
 
     private static final int ADD_GOOGLE_ACCOUNT = 1;
@@ -74,7 +73,6 @@ public class LoginActivity extends Activity {
 
     }
 
-    private Account chromiumAccount = null;
     private AccountManager accountManager;
 
     @Override
@@ -92,8 +90,7 @@ public class LoginActivity extends Activity {
     }
 
     private void authenticate() {
-        initializeChromiumAccount();
-        if (chromiumAccount == null) {
+        if (AccountSettings.get() == null) {
             startAddGoogleAccountIntent();
         } else {
             getToken();
@@ -103,12 +100,12 @@ public class LoginActivity extends Activity {
     private void startAddGoogleAccountIntent() {
         Intent addAccountIntent = new Intent(android.provider.Settings.ACTION_ADD_ACCOUNT)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        addAccountIntent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[]{GOOGLE_ACCOUNT_TYPE});
+        addAccountIntent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[]{AccountSettings.GOOGLE_ACCOUNT_TYPE});
         this.startActivityForResult(addAccountIntent, LoginActivity.ADD_GOOGLE_ACCOUNT);
     }
 
     private void getToken() {
-        accountManager.getAuthToken(chromiumAccount, TOKEN_TYPE, null, this, new AccountManagerCallback<Bundle>() {
+        accountManager.getAuthToken(AccountSettings.get().getChromiumAccount(), TOKEN_TYPE, null, this, new AccountManagerCallback<Bundle>() {
             public void run(AccountManagerFuture<Bundle> future) {
                 try {
                     Bundle authTokenBundle = future.getResult();
@@ -138,16 +135,6 @@ public class LoginActivity extends Activity {
                 //FIXME: support disagreement
                 getToken();
                 break;
-        }
-    }
-
-    private void initializeChromiumAccount() {
-        Account[] accounts = accountManager.getAccountsByType(GOOGLE_ACCOUNT_TYPE);
-        String[] names = new String[accounts.length];
-        for (int i = 0; i < names.length; i++) {
-            if (accounts[i].name.endsWith(CHROMIUM_EMAIL)) {
-                chromiumAccount = accounts[i];
-            }
         }
     }
 
