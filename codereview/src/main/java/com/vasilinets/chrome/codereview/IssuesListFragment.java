@@ -13,7 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.vasilinets.chrome.codereview.model.Issue;
-import com.vasilinets.chrome.codereview.requests.Requests;
+import com.vasilinets.chrome.codereview.requests.ServerCaller;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
 
         @Override
         public List<Issue> loadInBackground() {
-            return Requests.getMineIssues();
+            return ServerCaller.from(getContext()).loadMineIssues();
         }
 
         @Override

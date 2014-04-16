@@ -9,9 +9,14 @@
     tools:context="com.vasilinets.chrome.codereview.LoginActivity">
 
     <TextView
-        android:id="@+id/cookie"
-        android:text="@string/hello_world"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add_chromium_account_description"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Login"
+        android:onClick="onLoginClick"/>
 
 </RelativeLayout>
