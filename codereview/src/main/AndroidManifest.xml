@@ -13,15 +13,14 @@
         <meta-data android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-
         <activity
             android:name="com.chrome.codereview.LoginActivity"
-            android:configChanges="orientation"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_code_review_login" >
         </activity>
         <activity
             android:name="com.chrome.codereview.IssuesActivity"
-            android:configChanges="orientation"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_issues" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

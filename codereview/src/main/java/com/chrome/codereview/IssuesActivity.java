@@ -15,8 +15,6 @@ public class IssuesActivity extends Activity {
             startActivity(new Intent(this, LoginActivity.class));
         }
         setContentView(R.layout.activity_issues);
-
-        getFragmentManager().beginTransaction().add(R.id.issues_main, new IssuesListFragment()).commit();
     }
 
 }

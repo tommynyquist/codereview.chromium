@@ -36,10 +36,12 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
 
     @Override
     public void onLoaderReset(Loader<List<Issue>> listLoader) {
-
+        issuesAdapter.setIssues(null);
     }
 
     private static class IssuesLoader extends AsyncTaskLoader<List<Issue>> {
+
+        private List<Issue> result;
 
         public IssuesLoader(Context context) {
             super(context);
@@ -52,8 +54,29 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
 
         @Override
         protected void onStartLoading() {
-            super.onStartLoading();
+            if (result != null) {
+                deliverResult(result);
+                return;
+            }
             forceLoad();
+        }
+
+        @Override
+        protected void onReset() {
+            super.onReset();
+            onStopLoading();
+            result = null;
+        }
+
+        @Override
+        public void deliverResult(List<Issue> data) {
+            result = data;
+            super.deliverResult(data);
+        }
+
+        @Override
+        protected void onStopLoading() {
+            cancelLoad();
         }
     }
 
@@ -92,6 +115,5 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
         issuesAdapter = new IssuesAdapter(getActivity());
         setListAdapter(issuesAdapter);
         getLoaderManager().initLoader(0, new Bundle(), this);
-        getLoaderManager().getLoader(0).startLoading();
     }
 }
