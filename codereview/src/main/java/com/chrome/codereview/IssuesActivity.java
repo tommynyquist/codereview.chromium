@@ -1,10 +1,10 @@
-package com.vasilinets.chrome.codereview;
+package com.chrome.codereview;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.vasilinets.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.requests.ServerCaller;
 
 public class IssuesActivity extends Activity {
 

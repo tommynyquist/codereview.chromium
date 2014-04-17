@@ -1,4 +1,4 @@
-package com.vasilinets.chrome.codereview;
+package com.chrome.codereview;
 
 import android.app.ListFragment;
 import android.app.LoaderManager;
@@ -12,8 +12,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.vasilinets.chrome.codereview.model.Issue;
-import com.vasilinets.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.requests.ServerCaller;
 
 import java.util.List;
 

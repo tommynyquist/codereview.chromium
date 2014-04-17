@@ -1,4 +1,4 @@
-package com.vasilinets.chrome.codereview;
+package com.chrome.codereview;
 
 import android.app.Activity;
 import android.app.LoaderManager;
@@ -14,7 +14,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.vasilinets.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.requests.ServerCaller;
 
 public class LoginActivity extends Activity implements LoaderManager.LoaderCallbacks<LoginActivity.Result> {
 

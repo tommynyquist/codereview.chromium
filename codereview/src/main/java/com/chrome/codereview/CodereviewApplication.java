@@ -1,8 +1,8 @@
-package com.vasilinets.chrome.codereview;
+package com.chrome.codereview;
 
 import android.app.Application;
 
-import com.vasilinets.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.requests.ServerCaller;
 
 /**
  * Created by sergeyv on 13/4/14.

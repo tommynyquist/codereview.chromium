@@ -1,4 +1,4 @@
-package com.vasilinets.chrome.codereview.model;
+package com.chrome.codereview.model;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -3,5 +3,5 @@
     android:id="@+id/issue_detail_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.vasilinets.chrome.codereview.IssueDetailActivity"
+    tools:context="com.chrome.codereview.IssueDetailActivity"
     tools:ignore="MergeRootFrame" />

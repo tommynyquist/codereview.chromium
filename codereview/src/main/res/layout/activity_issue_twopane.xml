@@ -8,7 +8,7 @@
     android:divider="?android:attr/dividerHorizontal"
     android:orientation="horizontal"
     android:showDividers="middle"
-    tools:context="com.vasilinets.chrome.codereview.IssueListActivity">
+    tools:context="com.chrome.codereview.IssueListActivity">
 
     <!--
     This layout is a two-pane layout for the Issues
@@ -23,7 +23,7 @@
 
     <fragment
         android:id="@+id/issue_list"
-        android:name="com.vasilinets.chrome.codereview.IssueListFragment"
+        android:name="com.chrome.codereview.IssueListFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"

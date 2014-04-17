@@ -1,8 +1,6 @@
-package com.vasilinets.chrome.codereview.requests;
+package com.chrome.codereview.requests;
 
 import android.net.Uri;
-
-import org.apache.http.params.HttpParams;
 
 /**
  * Created by sergeyv on 13/4/14.

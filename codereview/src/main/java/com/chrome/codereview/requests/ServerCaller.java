@@ -1,4 +1,4 @@
-package com.vasilinets.chrome.codereview.requests;
+package com.chrome.codereview.requests;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -10,8 +10,8 @@ import android.preference.PreferenceManager;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.vasilinets.chrome.codereview.CodereviewApplication;
-import com.vasilinets.chrome.codereview.model.Issue;
+import com.chrome.codereview.CodereviewApplication;
+import com.chrome.codereview.model.Issue;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
