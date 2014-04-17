@@ -18,10 +18,13 @@ public class Issue {
     private final boolean closed;
 
 
-    public Issue(String owner, String subject, boolean closed) {
+    private final List<Message> messages;
+
+    public Issue(String owner, String subject, boolean closed, List<Message> messages) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
+        this.messages = messages;
     }
 
     public static Issue fromJSONObject(JSONObject jsonObject) {
@@ -29,7 +32,8 @@ public class Issue {
             String owner = jsonObject.getString("owner");
             String subject = jsonObject.getString("subject");
             boolean isClosed = jsonObject.getBoolean("closed");
-            return new Issue(owner, subject, isClosed);
+            List<Message> messages = Message.from(jsonObject.getJSONArray("messages"));
+            return new Issue(owner, subject, isClosed, messages);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -56,6 +60,10 @@ public class Issue {
 
     public String getOwner() {
         return owner;
+    }
+
+    public List<Message> getMessages() {
+        return messages;
     }
 
 }

@@ -99,7 +99,7 @@ public class ServerCaller {
         if (chromiumAccount == null) {
             return Collections.emptyList();
         }
-        return search(new SearchOptions.Builder().owner(chromiumAccount.name).create());
+        return search(new SearchOptions.Builder().owner(chromiumAccount.name).withMessages().create());
     }
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {

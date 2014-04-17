@@ -28,6 +28,7 @@ public class SearchOptions {
     public static class Builder {
         private String owner;
         private CloseState closeState = CloseState.UNKNOWN;
+        private boolean withMessages = false;
 
         Builder owner(String owner) {
             this.owner = owner;
@@ -42,18 +43,25 @@ public class SearchOptions {
             return this;
         }
 
+        Builder withMessages() {
+            this.withMessages = true;
+            return this;
+        }
+
         SearchOptions create() {
-            return new SearchOptions(owner, closeState);
+            return new SearchOptions(owner, closeState, withMessages);
         }
 
     }
 
     private final String owner;
     private final CloseState closeState;
+    private final boolean withMessages;
 
-    public SearchOptions(String owner, CloseState closeState) {
+    public SearchOptions(String owner, CloseState closeState, boolean withMessages) {
         this.owner = owner;
         this.closeState = closeState;
+        this.withMessages = withMessages;
     }
 
     public void fillParameters(Uri.Builder builder) {
@@ -64,7 +72,10 @@ public class SearchOptions {
         if (closeState != CloseState.UNKNOWN) {
             builder.appendQueryParameter("closed", closeState.toString());
         }
-    }
 
+        if (withMessages) {
+            builder.appendQueryParameter("with_messages", "true");
+        }
+    }
 
 }
