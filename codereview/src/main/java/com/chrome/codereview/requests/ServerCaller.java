@@ -40,8 +40,6 @@ public class ServerCaller {
         NEEDS_AUTHORIZATION;
     }
 
-    public static final String AUTH_COOKIE_URL = "https://codereview.chromium.org/_ah/login?continue=http://localhost&auth=";
-
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String COOKIE_PREFERENCE = "ServerCaller_COOKIE_PREFERENCE";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
@@ -51,6 +49,7 @@ public class ServerCaller {
 
     private static final Uri SEARCH_URL = BASE_URL.buildUpon().appendPath("search").appendQueryParameter("format", "json").build();
     private static final Uri XSRF_URL = BASE_URL.buildUpon().appendPath("xsrf_token").build();
+    private static final Uri AUTH_COOKIE_URL = BASE_URL.buildUpon().appendEncodedPath("_ah/login").appendQueryParameter("continue", "nowhere").build();
 
     private final DefaultHttpClient httpClient;
     private Account chromiumAccount;
@@ -59,7 +58,6 @@ public class ServerCaller {
 
     public ServerCaller(Context context) {
         this.context = context;
-        state = State.OK;
         httpClient = new DefaultHttpClient();
         reset();
     }
@@ -68,6 +66,7 @@ public class ServerCaller {
         initChromiumAccount();
         if (chromiumAccount == null) {
             state = State.NEEDS_ACCOUNT;
+            clearCookieAndToken();
             return;
         }
 
@@ -76,10 +75,12 @@ public class ServerCaller {
 
         if (cookie == null) {
             state = State.NEEDS_AUTHORIZATION;
+            clearCookieAndToken();
             return;
         }
 
         httpClient.getCookieStore().addCookie(new BasicClientCookie(AUTH_COOKIE_NAME, cookie));
+        state = State.OK;
 
     }
 
@@ -128,7 +129,9 @@ public class ServerCaller {
     }
 
     private void loadAndSaveCookie(String authToken) throws AuthenticationException, IOException {
-        HttpGet method = new HttpGet(AUTH_COOKIE_URL + authToken);
+        String url = AUTH_COOKIE_URL.buildUpon().appendQueryParameter("auth", authToken).build().toString();
+        System.out.println("URL "  + url);
+        HttpGet method = new HttpGet(url);
         httpClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
         HttpResponse res = httpClient.execute(method);
         Header[] headers = res.getHeaders("Set-Cookie");
@@ -171,6 +174,11 @@ public class ServerCaller {
     private void save(String name, String value) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         preferences.edit().putString(name, value).apply();
+    }
+
+    private void clearCookieAndToken() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        preferences.edit().remove(COOKIE_PREFERENCE).remove(XSRF_TOKEN_PREFERENCE).apply();
     }
 
 }
