@@ -23,6 +23,7 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class ServerCaller {
     private static final Uri SEARCH_URL = BASE_URL.buildUpon().appendPath("search").appendQueryParameter("format", "json").build();
     private static final Uri XSRF_URL = BASE_URL.buildUpon().appendPath("xsrf_token").build();
     private static final Uri AUTH_COOKIE_URL = BASE_URL.buildUpon().appendEncodedPath("_ah/login").appendQueryParameter("continue", "nowhere").build();
+    private static final Uri ISSUE_API_URL = BASE_URL.buildUpon().appendPath("api").build();
 
     private final DefaultHttpClient httpClient;
     private Account chromiumAccount;
@@ -81,7 +83,6 @@ public class ServerCaller {
 
         httpClient.getCookieStore().addCookie(new BasicClientCookie(AUTH_COOKIE_NAME, cookie));
         state = State.OK;
-
     }
 
     public static ServerCaller from(Context context) {
@@ -123,14 +124,12 @@ public class ServerCaller {
     private void loadAndSaveXSRFToken() throws IOException {
         HttpGet get = new HttpGet(XSRF_URL.toString());
         get.addHeader("X-Requesting-XSRF-Token", "");
-        HttpResponse result = httpClient.execute(get);
-        String xsrfToken = EntityUtils.toString(result.getEntity());
+        String xsrfToken = executeRequest(get);
         save(XSRF_TOKEN_PREFERENCE, xsrfToken);
     }
 
     private void loadAndSaveCookie(String authToken) throws AuthenticationException, IOException {
         String url = AUTH_COOKIE_URL.buildUpon().appendQueryParameter("auth", authToken).build().toString();
-        System.out.println("URL "  + url);
         HttpGet method = new HttpGet(url);
         httpClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
         HttpResponse res = httpClient.execute(method);
@@ -152,13 +151,21 @@ public class ServerCaller {
         throw new AuthenticationException("Failed to get cookie");
     }
 
+    public Issue loadIssue(int issueId) {
+        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendQueryParameter("messages", "true").build();
+        try {
+            return Issue.fromJSONObject(executeGetJSONRequest(uri));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private List<Issue> search(SearchOptions options) {
         Uri.Builder builder = SEARCH_URL.buildUpon();
         options.fillParameters(builder);
-        HttpGet get = new HttpGet(builder.build().toString());
         try {
-            JSONObject jsonObject = new JSONObject(executeRequest(get));
-            return Issue.fromJSONArray(jsonObject.getJSONArray("results"));
+            return Issue.fromJSONArray(executeGetJSONRequest(builder.build()).getJSONArray("results"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -170,6 +177,11 @@ public class ServerCaller {
         String entity = EntityUtils.toString(response.getEntity());
         return entity;
     }
+
+    private JSONObject executeGetJSONRequest(Uri uri) throws IOException, JSONException {
+        return new JSONObject(executeRequest(new HttpGet(uri.toString())));
+    }
+
 
     private void save(String name, String value) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);

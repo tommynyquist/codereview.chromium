@@ -27,6 +27,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.chrome.codereview.phone.IssueDetailActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/title_activity_issues" >
+        </activity>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

@@ -5,6 +5,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,15 +17,15 @@ public class Issue {
 
     private final String subject;
     private final boolean closed;
-
-
     private final List<Message> messages;
+    private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages) {
+    public Issue(String owner, String subject, boolean closed, List<Message> messages, int id) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
         this.messages = messages;
+        this.id = id;
     }
 
     public static Issue fromJSONObject(JSONObject jsonObject) {
@@ -32,8 +33,9 @@ public class Issue {
             String owner = jsonObject.getString("owner");
             String subject = jsonObject.getString("subject");
             boolean isClosed = jsonObject.getBoolean("closed");
-            List<Message> messages = Message.from(jsonObject.getJSONArray("messages"));
-            return new Issue(owner, subject, isClosed, messages);
+            int issue = jsonObject.getInt("issue");
+            List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
+            return new Issue(owner, subject, isClosed, messages, issue);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -54,16 +56,19 @@ public class Issue {
     }
 
 
-    public String getSubject() {
+    public String subject() {
         return subject;
     }
 
-    public String getOwner() {
+    public String owner() {
         return owner;
     }
 
-    public List<Message> getMessages() {
+    public List<Message> messages() {
         return messages;
     }
 
+    public int id() {
+        return id;
+    }
 }

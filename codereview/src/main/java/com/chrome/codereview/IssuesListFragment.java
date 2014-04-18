@@ -2,18 +2,19 @@ package com.chrome.codereview;
 
 import android.app.ListFragment;
 import android.app.LoaderManager;
-import android.content.AsyncTaskLoader;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.phone.IssueDetailActivity;
 import com.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.utils.BaseArrayAdapter;
+import com.chrome.codereview.utils.CachedLoader;
 
 import java.util.List;
 
@@ -21,6 +22,34 @@ import java.util.List;
  * Created by sergeyv on 13/4/14.
  */
 public class IssuesListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<List<Issue>> {
+
+    private static class IssuesLoader extends CachedLoader<List<Issue>> {
+
+        public IssuesLoader(Context context) {
+            super(context);
+        }
+
+        @Override
+        public List<Issue> loadInBackground() {
+            return ServerCaller.from(getContext()).loadMineIssues();
+        }
+    }
+
+    private static class IssuesAdapter extends BaseArrayAdapter<Issue> {
+
+        public IssuesAdapter(Context context) {
+            super(context, android.R.layout.simple_list_item_2);
+        }
+
+        @Override
+        public void fillView(View view, Issue issue) {
+            TextView subjectTextView = (TextView) view.findViewById(android.R.id.text1);
+            TextView ownerTextView = (TextView) view.findViewById(android.R.id.text2);
+            subjectTextView.setText(issue.subject());
+            ownerTextView.setText(issue.owner());
+        }
+
+    }
 
     private IssuesAdapter issuesAdapter;
 
@@ -31,82 +60,12 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
 
     @Override
     public void onLoadFinished(Loader<List<Issue>> listLoader, List<Issue> issues) {
-        issuesAdapter.setIssues(issues);
+        issuesAdapter.setData(issues);
     }
 
     @Override
     public void onLoaderReset(Loader<List<Issue>> listLoader) {
-        issuesAdapter.setIssues(null);
-    }
-
-    private static class IssuesLoader extends AsyncTaskLoader<List<Issue>> {
-
-        private List<Issue> result;
-
-        public IssuesLoader(Context context) {
-            super(context);
-        }
-
-        @Override
-        public List<Issue> loadInBackground() {
-            return ServerCaller.from(getContext()).loadMineIssues();
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if (result != null) {
-                deliverResult(result);
-                return;
-            }
-            forceLoad();
-        }
-
-        @Override
-        protected void onReset() {
-            super.onReset();
-            onStopLoading();
-            result = null;
-        }
-
-        @Override
-        public void deliverResult(List<Issue> data) {
-            result = data;
-            super.deliverResult(data);
-        }
-
-        @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
-    }
-
-    private class IssuesAdapter extends ArrayAdapter<Issue> {
-
-        private final LayoutInflater inflater;
-
-        public IssuesAdapter(Context context) {
-            super(context, android.R.layout.simple_list_item_1);
-            inflater = LayoutInflater.from(context);
-        }
-
-        void setIssues(List<Issue> issues) {
-            clear();
-            if (issues != null) {
-                addAll(issues);
-            }
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
-            }
-            TextView subjectTextView = (TextView) convertView.findViewById(android.R.id.text1);
-            TextView ownerTextView = (TextView) convertView.findViewById(android.R.id.text2);
-            subjectTextView.setText(getItem(position).getSubject());
-            ownerTextView.setText(getItem(position).getOwner());
-            return convertView;
-        }
+        issuesAdapter.setData(null);
     }
 
     @Override
@@ -115,5 +74,13 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
         issuesAdapter = new IssuesAdapter(getActivity());
         setListAdapter(issuesAdapter);
         getLoaderManager().initLoader(0, new Bundle(), this);
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        Issue issue = issuesAdapter.getItem(position);
+        Intent intent = new Intent(getActivity(), IssueDetailActivity.class);
+        intent.putExtra(IssueFragment.EXTRA_ISSUE_ID, issue.id());
+        startActivity(intent);
     }
 }

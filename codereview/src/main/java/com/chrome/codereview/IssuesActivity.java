@@ -14,7 +14,7 @@ public class IssuesActivity extends Activity {
         if (ServerCaller.from(this).getState() != ServerCaller.State.OK) {
             startActivity(new Intent(this, LoginActivity.class));
         }
-        setContentView(R.layout.activity_issues);
+        setContentView(R.layout.activity_issue_list);
     }
 
 }
