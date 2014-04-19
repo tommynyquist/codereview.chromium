@@ -71,4 +71,8 @@ public class Issue {
     public int id() {
         return id;
     }
+
+    public boolean isClosed() {
+        return closed;
+    }
 }

@@ -11,4 +11,10 @@
     <string name="toast_auth_failed">Authentication Failed</string>
     <string name="trying_to_authenticate">Trying to authenticate with </string>
     <string name="login">Login</string>
+
+    <string name="header_incoming_reviews">Incoming reviews</string>
+    <string name="header_outgoing_reviews">Outgoing reviews</string>
+    <string name="header_cced_reviews">Issues CCd to</string>
+    <string name="header_recently_closed">Recently closed</string>
+
 </resources>

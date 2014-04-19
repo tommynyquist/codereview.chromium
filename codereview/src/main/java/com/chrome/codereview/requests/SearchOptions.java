@@ -7,7 +7,7 @@ import android.net.Uri;
  */
 public class SearchOptions {
 
-    private static enum CloseState {
+    public static enum CloseState {
         UNKNOWN(0),
         OPEN(1),
         CLOSED(2);
@@ -29,6 +29,8 @@ public class SearchOptions {
         private String owner;
         private CloseState closeState = CloseState.UNKNOWN;
         private boolean withMessages = false;
+        private String reviewer;
+        private String cc;
 
         Builder owner(String owner) {
             this.owner = owner;
@@ -48,8 +50,18 @@ public class SearchOptions {
             return this;
         }
 
+        Builder reviewer(String reviewer) {
+            this.reviewer = reviewer;
+            return this;
+        }
+
+        Builder cc(String cc) {
+            this.cc = cc;
+            return this;
+        }
+
         SearchOptions create() {
-            return new SearchOptions(owner, closeState, withMessages);
+            return new SearchOptions(owner, closeState, withMessages, reviewer, cc);
         }
 
     }
@@ -57,11 +69,15 @@ public class SearchOptions {
     private final String owner;
     private final CloseState closeState;
     private final boolean withMessages;
+    private final String reviewer;
+    private final String cc;
 
-    public SearchOptions(String owner, CloseState closeState, boolean withMessages) {
+    public SearchOptions(String owner, CloseState closeState, boolean withMessages, String reviewer, String cc) {
         this.owner = owner;
         this.closeState = closeState;
         this.withMessages = withMessages;
+        this.reviewer = reviewer;
+        this.cc = cc;
     }
 
     public void fillParameters(Uri.Builder builder) {
@@ -76,6 +92,15 @@ public class SearchOptions {
         if (withMessages) {
             builder.appendQueryParameter("with_messages", "true");
         }
+
+        if (reviewer != null) {
+            builder.appendQueryParameter("reviewer", reviewer);
+        }
+
+        if (cc != null) {
+            builder.appendQueryParameter("cc", cc);
+        }
+
     }
 
 }

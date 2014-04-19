@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
+import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -94,14 +95,20 @@ public class ServerCaller {
     }
 
     public String getAccountName() {
+        if (chromiumAccount == null) {
+            return null;
+        }
         return chromiumAccount.name;
     }
 
-    public List<Issue> loadMineIssues() {
-        if (chromiumAccount == null) {
-            return Collections.emptyList();
+    public UserIssues loadIssuesForUser(String accountName) {
+        if (accountName == null) {
+            return null;
         }
-        return search(new SearchOptions.Builder().owner(chromiumAccount.name).withMessages().create());
+        List<Issue> mineIssues = search(new SearchOptions.Builder().owner(accountName).withMessages().create());
+        List<Issue> ccIssues = search(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create());
+        List<Issue> onReviewIssues = search(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create());
+        return new UserIssues(onReviewIssues, mineIssues, ccIssues);
     }
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {
