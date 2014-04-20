@@ -21,6 +21,16 @@
         android:paddingRight="@dimen/list_item_horizontal_padding"
         android:textAppearance="@android:style/TextAppearance.Small"/>
 
+    <TextView
+        android:id="@+id/reviewers"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:paddingLeft="@dimen/list_item_horizontal_padding"
+        android:paddingRight="@dimen/list_item_horizontal_padding"
+        android:singleLine="true"
+        />
+
     <ImageView
         android:id="@+id/list_divider"
         android:layout_width="fill_parent"

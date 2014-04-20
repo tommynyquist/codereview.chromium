@@ -12,6 +12,9 @@ import java.util.List;
  */
 public class Message {
 
+    private static final String LGTM = "lgtm";
+    private static final String NOT_LGTM = "not lgtm";
+
     public Message(String text, String sender) {
         this.text = text;
         this.sender = sender;
@@ -25,6 +28,16 @@ public class Message {
 
     public String getText() {
         return text;
+    }
+
+    public Reviewer.Opinion reviewerOpinion() {
+        if (text.startsWith(LGTM)) {
+            return Reviewer.Opinion.LGTM;
+        }
+        if (text.startsWith(NOT_LGTM)) {
+            return Reviewer.Opinion.NOT_LGTM;
+        }
+        return Reviewer.Opinion.NO_OPINION;
     }
 
     private final String sender;

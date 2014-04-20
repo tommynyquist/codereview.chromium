@@ -14,17 +14,18 @@ import java.util.List;
 public class Issue {
 
     private final String owner;
-
     private final String subject;
     private final boolean closed;
     private final List<Message> messages;
+    private final List<Reviewer> reviewers;
     private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages, int id) {
+    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, int id) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
         this.messages = messages;
+        this.reviewers = reviewers;
         this.id = id;
     }
 
@@ -35,7 +36,8 @@ public class Issue {
             boolean isClosed = jsonObject.getBoolean("closed");
             int issue = jsonObject.getInt("issue");
             List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
-            return new Issue(owner, subject, isClosed, messages, issue);
+            List<Reviewer> reviewers = Reviewer.from(jsonObject.getJSONArray("reviewers"), messages);
+            return new Issue(owner, subject, isClosed, messages, reviewers, issue);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -66,6 +68,10 @@ public class Issue {
 
     public List<Message> messages() {
         return messages;
+    }
+
+    public List<Reviewer> reviewers() {
+        return reviewers;
     }
 
     public int id() {

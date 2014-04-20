@@ -1,6 +1,12 @@
 package com.chrome.codereview;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
 
 import java.util.ArrayList;
@@ -106,8 +113,10 @@ class UserIssuesAdapter extends BaseAdapter {
         TextView ownerTextView = (TextView) convertView.findViewById(R.id.owner);
         subjectTextView.setText(issue.subject());
         ownerTextView.setText(issue.owner());
+        TextView reviewers = (TextView) convertView.findViewById(R.id.reviewers);
+        reviewers.setText(reviewersSpannable(issue.reviewers()), TextView.BufferType.SPANNABLE);
         boolean shouldShowDivider = position + 1 < boxes.size() ? boxes.get(position + 1).isBoxIssue() : false;
-        int visibility = shouldShowDivider ?  View.VISIBLE : View.GONE;
+        int visibility = shouldShowDivider ? View.VISIBLE : View.GONE;
         convertView.findViewById(R.id.list_divider).setVisibility(visibility);
         return convertView;
     }
@@ -126,8 +135,35 @@ class UserIssuesAdapter extends BaseAdapter {
             return;
         }
         boxes.add(new Box(titleRes));
-        for (Issue issue: issues) {
+        for (Issue issue : issues) {
             boxes.add(new Box(issue));
         }
+    }
+
+    public static Spannable reviewersSpannable(List<Reviewer> reviewers) {
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        boolean firstReviewer = true;
+        for (Reviewer reviewer : reviewers) {
+            if (!firstReviewer) {
+                builder.append(", ");
+            }
+            int start = builder.length();
+            int end = builder.length() + reviewer.name().length();
+            builder.append(reviewer.name());
+            ForegroundColorSpan colorSpan = null;
+            switch (reviewer.opinion()) {
+                case LGTM:
+                    colorSpan = new ForegroundColorSpan(Color.argb(255, 0, 155, 0));
+                    break;
+                case NOT_LGTM:
+                    colorSpan = new ForegroundColorSpan(Color.RED);
+                    break;
+            }
+            if (colorSpan != null) {
+                builder.setSpan(colorSpan, start, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            }
+            firstReviewer = false;
+        }
+        return builder;
     }
 }
