@@ -4,9 +4,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Created by sergeyv on 13/4/14.
@@ -18,14 +22,16 @@ public class Issue {
     private final boolean closed;
     private final List<Message> messages;
     private final List<Reviewer> reviewers;
+    private final Date lastModified;
     private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, int id) {
+    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, int id) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
         this.messages = messages;
         this.reviewers = reviewers;
+        this.lastModified = lastModified;
         this.id = id;
     }
 
@@ -37,8 +43,14 @@ public class Issue {
             int issue = jsonObject.getInt("issue");
             List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
             List<Reviewer> reviewers = Reviewer.from(jsonObject.getJSONArray("reviewers"), messages);
-            return new Issue(owner, subject, isClosed, messages, reviewers, issue);
+            String lastModifiedString = jsonObject.getString("modified");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
+            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            Date lastModified = format.parse(lastModifiedString);
+            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, issue);
         } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
@@ -80,5 +92,9 @@ public class Issue {
 
     public boolean isClosed() {
         return closed;
+    }
+
+    public Date lastModified() {
+        return lastModified;
     }
 }

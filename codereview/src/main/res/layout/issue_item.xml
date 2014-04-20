@@ -28,8 +28,14 @@
         android:ellipsize="end"
         android:paddingLeft="@dimen/list_item_horizontal_padding"
         android:paddingRight="@dimen/list_item_horizontal_padding"
-        android:singleLine="true"
-        />
+        android:singleLine="true"/>
+
+    <TextView
+        android:id="@+id/modified"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/list_item_horizontal_padding"
+        android:paddingRight="@dimen/list_item_horizontal_padding"/>
 
     <ImageView
         android:id="@+id/list_divider"
