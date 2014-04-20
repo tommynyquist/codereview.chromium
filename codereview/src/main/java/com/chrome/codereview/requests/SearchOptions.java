@@ -8,8 +8,8 @@ import android.net.Uri;
 public class SearchOptions {
 
     public static enum CloseState {
-        UNKNOWN(0),
-        OPEN(1),
+        UNKNOWN(1),
+        OPEN(3),
         CLOSED(2);
 
         final int value;
