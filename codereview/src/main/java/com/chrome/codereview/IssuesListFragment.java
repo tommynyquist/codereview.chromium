@@ -59,7 +59,10 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
         issuesAdapter = new UserIssuesAdapter(getActivity());
         setListAdapter(issuesAdapter);
         getLoaderManager().initLoader(0, new Bundle(), this);
-        return super.onCreateView(inflater, container, savedInstanceState);
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        ListView listView = (ListView) view.findViewById(android.R.id.list);
+        listView.setDivider(null);
+        return view;
     }
 
     @Override

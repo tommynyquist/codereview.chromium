@@ -94,10 +94,11 @@ class UserIssuesAdapter extends BaseAdapter {
             return getGroupHeaderView(boxes.get(position).titleResource, convertView, parent);
         }
 
-        return getIssueView(boxes.get(position).issue, convertView, parent);
+        return getIssueView(position, convertView, parent);
     }
 
-    private View getIssueView(Issue issue, View convertView, ViewGroup parent) {
+    private View getIssueView(int position, View convertView, ViewGroup parent) {
+        Issue issue = boxes.get(position).issue;
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.issue_item, parent, false);
         }
@@ -105,7 +106,9 @@ class UserIssuesAdapter extends BaseAdapter {
         TextView ownerTextView = (TextView) convertView.findViewById(R.id.owner);
         subjectTextView.setText(issue.subject());
         ownerTextView.setText(issue.owner());
-
+        boolean shouldShowDivider = position + 1 < boxes.size() ? boxes.get(position + 1).isBoxIssue() : false;
+        int visibility = shouldShowDivider ?  View.VISIBLE : View.GONE;
+        convertView.findViewById(R.id.list_divider).setVisibility(visibility);
         return convertView;
     }
 
@@ -113,7 +116,7 @@ class UserIssuesAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.list_group_header, parent, false);
         }
-        TextView titleView = (TextView) convertView;
+        TextView titleView = (TextView) convertView.findViewById(android.R.id.text1);
         titleView.setText(titleRes);
         return convertView;
     }
