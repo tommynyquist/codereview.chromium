@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
+import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -16,6 +17,7 @@ import com.chrome.codereview.model.Issue;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -24,10 +26,12 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -144,7 +148,7 @@ public class ServerCaller {
         if (res.getEntity() != null) {
             res.getEntity().consumeContent();
         }
-        if (res.getStatusLine().getStatusCode() != 302 || headers.length == 0) {
+        if (res.getStatusLine().getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY || headers.length == 0) {
             throw new AuthenticationException("Failed to get cookie");
         }
 
@@ -158,10 +162,29 @@ public class ServerCaller {
         throw new AuthenticationException("Failed to get cookie");
     }
 
-    public Issue loadIssue(int issueId) {
+    private PatchSet loadPatchSet(int issueId, int patchSetId) {
+        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendPath(patchSetId + "").build();
+        try {
+            return PatchSet.from(executeGetJSONRequest(uri));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Issue loadIssueWithPatchSetData(int issueId) {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendQueryParameter("messages", "true").build();
         try {
-            return Issue.fromJSONObject(executeGetJSONRequest(uri));
+            JSONObject jsonObject = executeGetJSONRequest(uri);
+            JSONArray patchSetsJson = jsonObject.getJSONArray("patchsets");
+            List<PatchSet> patchSets = new ArrayList<PatchSet>();
+            for (int i = 0; i < patchSetsJson.length(); i++) {
+                PatchSet patchSet = loadPatchSet(issueId, patchSetsJson.getInt(i));
+                if (patchSet != null) {
+                    patchSets.add(patchSet);
+                }
+            }
+            return Issue.fromJSONObject(jsonObject, patchSets);
         } catch (Exception e) {
             e.printStackTrace();
         }

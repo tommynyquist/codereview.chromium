@@ -23,19 +23,21 @@ public class Issue {
     private final List<Message> messages;
     private final List<Reviewer> reviewers;
     private final Date lastModified;
+    private final List<PatchSet> patchSets;
     private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, int id) {
+    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, int id) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
         this.messages = messages;
         this.reviewers = reviewers;
         this.lastModified = lastModified;
+        this.patchSets = patchSets;
         this.id = id;
     }
 
-    public static Issue fromJSONObject(JSONObject jsonObject) {
+    public static Issue fromJSONObject(JSONObject jsonObject, List<PatchSet> patchSets) {
         try {
             String owner = jsonObject.getString("owner");
             String subject = jsonObject.getString("subject");
@@ -47,13 +49,17 @@ public class Issue {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
             Date lastModified = format.parse(lastModifiedString);
-            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, issue);
+            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, patchSets, issue);
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (ParseException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Issue fromJSONObject(JSONObject jsonObject) {
+        return fromJSONObject(jsonObject, Collections.<PatchSet>emptyList());
     }
 
     public static List<Issue> fromJSONArray(JSONArray jsonArray) {
@@ -97,4 +103,9 @@ public class Issue {
     public Date lastModified() {
         return lastModified;
     }
+
+    public List<PatchSet> patchSets() {
+        return patchSets;
+    }
 }
+

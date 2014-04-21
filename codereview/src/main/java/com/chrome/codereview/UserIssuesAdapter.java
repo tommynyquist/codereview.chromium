@@ -15,6 +15,7 @@ import android.widget.TextView;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
+import com.chrome.codereview.utils.ViewUtils;
 
 import org.w3c.dom.Text;
 
@@ -121,21 +122,16 @@ class UserIssuesAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.issue_item, parent, false);
         }
-        setText(convertView, R.id.subject, issue.subject());
-        setText(convertView, R.id.owner, issue.owner());
+        ViewUtils.setText(convertView, R.id.subject, issue.subject());
+        ViewUtils.setText(convertView, R.id.owner, issue.owner());
         TextView reviewers = (TextView) convertView.findViewById(R.id.reviewers);
         reviewers.setText(reviewersSpannable(issue.reviewers()), TextView.BufferType.SPANNABLE);
-        setText(convertView, R.id.modified, createAgoText(issue.lastModified()));
+        ViewUtils.setText(convertView, R.id.modified, createAgoText(issue.lastModified()));
 
         boolean shouldShowDivider = position + 1 < boxes.size() ? boxes.get(position + 1).isBoxIssue() : false;
         int visibility = shouldShowDivider ? View.VISIBLE : View.GONE;
         convertView.findViewById(R.id.list_divider).setVisibility(visibility);
         return convertView;
-    }
-
-    private void setText(View view, int id, String text) {
-        TextView textView = (TextView) view.findViewById(id);
-        textView.setText(text);
     }
 
     private View getGroupHeaderView(int titleRes, View convertView, ViewGroup parent) {
