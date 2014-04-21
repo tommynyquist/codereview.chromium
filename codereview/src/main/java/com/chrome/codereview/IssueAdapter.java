@@ -29,13 +29,6 @@ class IssueAdapter extends BaseExpandableListAdapter {
         inflater = LayoutInflater.from(context);
     }
 
-    public View getView(int position, View convertView, ViewGroup parent) {
-        if (position < issue.patchSets().size()) {
-            return getPatchSetView(issue.patchSets().get(position), convertView, parent);
-        }
-        return getMessageView(issue.messages().get(position - issue.patchSets().size()), convertView, parent);
-    }
-
     public View getMessageView(Message message, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = inflater.inflate(android.R.layout.simple_expandable_list_item_2, parent, false);
