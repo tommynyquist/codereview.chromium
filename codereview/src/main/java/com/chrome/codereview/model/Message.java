@@ -14,6 +14,7 @@ public class Message {
 
     private static final String LGTM = "lgtm";
     private static final String NOT_LGTM = "not lgtm";
+    private static final String RSLGTM = "rslgtm";
 
     public Message(String text, String sender) {
         this.text = text;
@@ -31,6 +32,9 @@ public class Message {
     }
 
     public Reviewer.Opinion reviewerOpinion() {
+        if (text.startsWith(RSLGTM)) {
+            return Reviewer.Opinion.LGTM;
+        }
         if (text.startsWith(LGTM)) {
             return Reviewer.Opinion.LGTM;
         }
@@ -48,7 +52,7 @@ public class Message {
         return new Message(text, sender);
     }
 
-    public static List<Message> from (JSONArray jsonArray) {
+    public static List<Message> from(JSONArray jsonArray) {
         ArrayList<Message> result = new ArrayList<Message>(jsonArray.length());
         for (int i = 0; i < jsonArray.length(); i++) {
             try {
