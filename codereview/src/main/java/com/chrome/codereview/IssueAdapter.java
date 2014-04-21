@@ -29,9 +29,12 @@ class IssueAdapter extends BaseExpandableListAdapter {
         inflater = LayoutInflater.from(context);
     }
 
-    public View getMessageView(Message message, View convertView, ViewGroup parent) {
-        if (convertView == null) {
-            convertView = inflater.inflate(android.R.layout.simple_expandable_list_item_2, parent, false);
+    public View getMessageView(Message message, View convertView, ViewGroup parent, boolean isExpanded) {
+        if ((convertView == null && !isExpanded) || (convertView != null && convertView.getId() != R.id.message_collapsed && !isExpanded)) {
+            convertView = inflater.inflate(R.layout.message_collapsed, parent, false);
+        }
+        if ((convertView == null && isExpanded) || (convertView != null && convertView.getId() != R.id.message_expanded && isExpanded)) {
+            convertView = inflater.inflate(R.layout.message_expanded, parent, false);
         }
         ViewUtils.setText(convertView, android.R.id.text1, message.getText());
         ViewUtils.setText(convertView, android.R.id.text2, message.getSender());
@@ -104,7 +107,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
             case PATCH_SET_GROUP_TYPE:
                 return getPatchSetView((PatchSet) getGroup(groupPosition), convertView, parent);
             case MESSAGE_GROUP_TYPE:
-                return getMessageView((Message) getGroup(groupPosition), convertView, parent);
+                return getMessageView((Message) getGroup(groupPosition), convertView, parent, isExpanded);
         }
         throw new IllegalStateException("Unknown type " + getGroupType(groupPosition));
     }
