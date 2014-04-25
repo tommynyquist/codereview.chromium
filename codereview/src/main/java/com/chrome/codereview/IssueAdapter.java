@@ -93,7 +93,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     @Override
     public long getChildId(int groupPosition, int childPosition) {
-        return 0;
+        return childPosition;
     }
 
     @Override
@@ -128,6 +128,16 @@ class IssueAdapter extends BaseExpandableListAdapter {
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
         return false;
+    }
+
+    @Override
+    public int getGroupTypeCount() {
+        return 2;
+    }
+
+    @Override
+    public int getChildTypeCount() {
+        return 1;
     }
 
     @Override
