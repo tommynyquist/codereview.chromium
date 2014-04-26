@@ -14,8 +14,10 @@ public class PatchSet {
 
     private final String message;
     private final List<PatchSetFile> files;
+    private final int numComments;
 
-    public PatchSet(String message, List<PatchSetFile> files) {
+    public PatchSet(String message, List<PatchSetFile> files, int numComments) {
+        this.numComments = numComments;
         this.message = message != null ? message : "";
         this.files = files;
     }
@@ -29,7 +31,8 @@ public class PatchSet {
             files.add(PatchSetFile.from(file, meta));
         }
         String message = !jsonObject.isNull("message") ? jsonObject.getString("message") : null;
-        return new PatchSet(message, files);
+        int numComments = jsonObject.getInt("num_comments");
+        return new PatchSet(message, files, numComments);
     }
 
     public String message() {
@@ -38,5 +41,9 @@ public class PatchSet {
 
     public List<PatchSetFile> files() {
         return files;
+    }
+
+    public int numComments() {
+        return numComments;
     }
 }

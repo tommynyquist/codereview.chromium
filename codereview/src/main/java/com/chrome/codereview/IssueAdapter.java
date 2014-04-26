@@ -2,7 +2,6 @@ package com.chrome.codereview;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +23,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     private static final int PATCH_SET_GROUP_TYPE = 0;
     private static final int MESSAGE_GROUP_TYPE = 1;
-    private static final int MESSAGE_GROUP_HEADER = 2;
+    private static final int GROUP_HEADER = 2;
 
     private Issue issue;
     private Context context;
@@ -49,12 +48,6 @@ class IssueAdapter extends BaseExpandableListAdapter {
             messageView.setText(message.text());
             messageView.setTypeface(null, Typeface.NORMAL);
         }
-        ImageView imageView = (ImageView) convertView.findViewById(R.id.expander);
-        if (isExpanded) {
-            imageView.getDrawable().setState(new int[] {android.R.attr.state_expanded});
-        } else {
-            imageView.getDrawable().setState(new int[] {});
-        }
         ViewUtils.setText(convertView, R.id.sender, message.sender());
         ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, message.date()));
         View stateView = convertView.findViewById(R.id.state);
@@ -70,18 +63,21 @@ class IssueAdapter extends BaseExpandableListAdapter {
     public View getPatchSetView(int position, View convertView, ViewGroup parent) {
         PatchSet patchSet = (PatchSet) getGroup(position);
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.patchset_collapsed_item, parent, false);
+            convertView = inflater.inflate(R.layout.patchset_item, parent, false);
         }
-        String patchSetText = context.getString(R.string.patchset, position + 1) + patchSet.message();
+        String patchSetText = context.getString(R.string.patchset, position) + patchSet.message();
         ViewUtils.setText(convertView, R.id.patchset_message, patchSetText);
+        ViewUtils.setText(convertView, R.id.total_comments, context.getString(R.string.total_comments, patchSet.numComments()));
+        convertView.findViewById(R.id.list_divider).setVisibility(position == issue.patchSets().size() ? View.INVISIBLE : View.VISIBLE);
         return convertView;
     }
 
-    public View getMessageGroupHeader(View convertView, ViewGroup parent) {
+    public View getGroupHeader(View convertView, ViewGroup parent, int position) {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.list_group_header, parent, false);
         }
-        ViewUtils.setText(convertView, android.R.id.text1, context.getString(R.string.messages));
+        int stringRes = position == 0 ? R.string.patchsets : R.string.messages;
+        ViewUtils.setText(convertView, android.R.id.text1, context.getString(stringRes));
         return convertView;
     }
 
@@ -95,7 +91,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
         if (issue == null) {
             return 0;
         }
-        return issue.patchSets().size() + issue.messages().size() + 1;
+        return issue.patchSets().size() + issue.messages().size() + 2;
     }
 
     @Override
@@ -103,7 +99,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
         switch (getGroupType(groupPosition)) {
             case PATCH_SET_GROUP_TYPE:
                 return ((PatchSet) getGroup(groupPosition)).files().size();
-            case MESSAGE_GROUP_HEADER:
+            case GROUP_HEADER:
             case MESSAGE_GROUP_TYPE:
                 return 0;
         }
@@ -112,10 +108,10 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getGroup(int groupPosition) {
-        if (groupPosition < issue.patchSets().size()) {
-            return issue.patchSets().get(groupPosition);
+        if (groupPosition <= issue.patchSets().size()) {
+            return issue.patchSets().get(groupPosition - 1);
         }
-        return issue.messages().get(groupPosition - issue.patchSets().size() - 1);
+        return issue.messages().get(groupPosition - issue.patchSets().size() - 2);
     }
 
     @Override
@@ -140,15 +136,33 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+        View result = null;
         switch (getGroupType(groupPosition)) {
             case PATCH_SET_GROUP_TYPE:
-                return getPatchSetView(groupPosition, convertView, parent);
+                result = getPatchSetView(groupPosition, convertView, parent);
+                break;
             case MESSAGE_GROUP_TYPE:
-                return getMessageView((Message) getGroup(groupPosition), convertView, parent, isExpanded);
-            case MESSAGE_GROUP_HEADER:
-                return getMessageGroupHeader(convertView, parent);
+                result = getMessageView((Message) getGroup(groupPosition), convertView, parent, isExpanded);
+                break;
+            case GROUP_HEADER:
+                result = getGroupHeader(convertView, parent, groupPosition);
+                break;
         }
-        throw new IllegalStateException("Unknown type " + getGroupType(groupPosition));
+        if (result == null) {
+            throw new IllegalStateException("Unknown type " + getGroupType(groupPosition));
+        }
+
+        ImageView imageView = (ImageView) result.findViewById(R.id.expander);
+        if (imageView == null) {
+            return result;
+        }
+        if (isExpanded) {
+            imageView.getDrawable().setState(new int[] {android.R.attr.state_expanded});
+        } else {
+            imageView.getDrawable().setState(new int[] {});
+        }
+
+        return result;
     }
 
     @Override
@@ -156,7 +170,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
         if (getGroupType(groupPosition) == MESSAGE_GROUP_TYPE) {
             throw new IllegalStateException("No child for message type");
         }
-        PatchSetFile patchSetFile = issue.patchSets().get(groupPosition).files().get(childPosition);
+        PatchSetFile patchSetFile = issue.patchSets().get(groupPosition - 1).files().get(childPosition);
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.patchset_file_item, parent, false);
         }
@@ -181,11 +195,14 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getGroupType(int groupPosition) {
-        int diff = groupPosition - issue.patchSets().size();
+        if (groupPosition == 0) {
+            return GROUP_HEADER;
+        }
+        int diff = groupPosition - issue.patchSets().size() - 1;
         if (diff < 0) {
             return PATCH_SET_GROUP_TYPE;
         } else if (diff == 0) {
-            return MESSAGE_GROUP_HEADER;
+            return GROUP_HEADER;
         } else {
             return MESSAGE_GROUP_TYPE;
         }

@@ -14,12 +14,15 @@
 
     <string name="header_incoming_reviews">INCOMING REVIEWS</string>
     <string name="header_outgoing_reviews">OUTGOING REVIEWS</string>
-    <string name="empty_message">&lt;empty message&gt;</string>
     <string name="header_cced_reviews">ISSUES CCD TO</string>
     <string name="header_recently_closed">RECENTLY CLOSED</string>
     <string name="ago">ago</string>
     <string name="patchset">Patch Set %s:&#160;</string>
+    <string name="empty_message">&lt;empty message&gt;</string>
+    <string name="total_comments">Total comments: %s</string>
+
     <string name="messages">MESSAGES</string>
+    <string name="patchsets">PATCH SETS</string>
 
     <plurals name="year">
         <item quantity="one">year</item>
