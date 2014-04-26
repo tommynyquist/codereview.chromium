@@ -12,6 +12,7 @@
         android:paddingTop="8dp"
         android:paddingLeft="@dimen/list_item_horizontal_padding"
         android:textAppearance="@android:style/TextAppearance.Small"
+        android:textColor="#aeaeae"
         android:textStyle="bold"/>
 
     <ImageView

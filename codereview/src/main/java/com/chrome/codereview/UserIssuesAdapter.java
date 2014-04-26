@@ -1,7 +1,6 @@
 package com.chrome.codereview;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -15,13 +14,10 @@ import android.widget.TextView;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
+import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.ViewUtils;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,13 +27,6 @@ class UserIssuesAdapter extends BaseAdapter {
 
     private static final int TYPE_ISSUE = 0;
     private static final int TYPE_GROUP_HEADER = 1;
-
-    private static final long MINUTE = 60 * 1000;
-    private static final long HOUR = 60 * MINUTE;
-    private static final long DAY = 24 * HOUR;
-    private static final long WEEK = 7 * DAY;
-    private static final long MONTH = 30 * DAY;
-    private static final long YEAR = 365 * DAY;
 
     private static class Box {
 
@@ -126,7 +115,7 @@ class UserIssuesAdapter extends BaseAdapter {
         ViewUtils.setText(convertView, R.id.owner, issue.owner());
         TextView reviewers = (TextView) convertView.findViewById(R.id.reviewers);
         reviewers.setText(reviewersSpannable(issue.reviewers()), TextView.BufferType.SPANNABLE);
-        ViewUtils.setText(convertView, R.id.modified, createAgoText(issue.lastModified()));
+        ViewUtils.setText(convertView, R.id.modified, DateUtils.createAgoText(context, issue.lastModified()));
 
         boolean shouldShowDivider = position + 1 < boxes.size() ? boxes.get(position + 1).isBoxIssue() : false;
         int visibility = shouldShowDivider ? View.VISIBLE : View.GONE;
@@ -153,7 +142,7 @@ class UserIssuesAdapter extends BaseAdapter {
         }
     }
 
-    public static Spannable reviewersSpannable(List<Reviewer> reviewers) {
+    public Spannable reviewersSpannable(List<Reviewer> reviewers) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
         boolean firstReviewer = true;
         for (Reviewer reviewer : reviewers) {
@@ -163,32 +152,13 @@ class UserIssuesAdapter extends BaseAdapter {
             int start = builder.length();
             int end = builder.length() + reviewer.name().length();
             builder.append(reviewer.name());
-            ForegroundColorSpan colorSpan = null;
-            switch (reviewer.opinion()) {
-                case LGTM:
-                    colorSpan = new ForegroundColorSpan(Color.argb(255, 0, 155, 0));
-                    break;
-                case NOT_LGTM:
-                    colorSpan = new ForegroundColorSpan(Color.RED);
-                    break;
-            }
-            if (colorSpan != null) {
-                builder.setSpan(colorSpan, start, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            if (reviewer.decoration() != null){
+                builder.setSpan(new ForegroundColorSpan(reviewer.decoration().color(context)), start, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
             firstReviewer = false;
         }
         return builder;
     }
 
-    public String createAgoText(Date lastModified) {
-        long time = System.currentTimeMillis() - lastModified.getTime();
-        long[] times = new long[] {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
-        int[] resources = new int[] {R.plurals.year, R.plurals.month, R.plurals.week, R.plurals.day, R.plurals.hour, R.plurals.minute};
-        int i = 0;
-        while (time / times[i] == 0) {
-            i++;
-        }
-        long quantity = time / times[i];
-        return quantity + " " + context.getResources().getQuantityString(resources[i], (int) quantity) + " " + context.getString(R.string.ago);
-    }
+
 }

@@ -1,16 +1,16 @@
 package com.chrome.codereview.model;
 
+import com.chrome.codereview.utils.DateUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 /**
  * Created by sergeyv on 13/4/14.
@@ -45,10 +45,7 @@ public class Issue {
             int issue = jsonObject.getInt("issue");
             List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
             List<Reviewer> reviewers = Reviewer.from(jsonObject.getJSONArray("reviewers"), messages);
-            String lastModifiedString = jsonObject.getString("modified");
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
-            format.setTimeZone(TimeZone.getTimeZone("GMT"));
-            Date lastModified = format.parse(lastModifiedString);
+            Date lastModified = DateUtils.getDate(jsonObject, "modified");
             return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, patchSets, issue);
         } catch (JSONException e) {
             e.printStackTrace();

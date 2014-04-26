@@ -48,7 +48,7 @@ public class IssueFragment extends Fragment implements LoaderManager.LoaderCallb
         }
         issueAdapter = new IssueAdapter(getActivity());
         getLoaderManager().initLoader(0, new Bundle(), this);
-        View view =  inflater.inflate(android.R.layout.expandable_list_content, container);
+        View view =  inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
         listView.setAdapter(issueAdapter);
         return view;

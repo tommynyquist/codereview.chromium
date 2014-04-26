@@ -14,6 +14,7 @@ public class PatchSetFile {
     enum Status {
         ADDED,
         MODIFIED,
+        DELETED,
     }
 
     private final Status status;
@@ -57,6 +58,8 @@ public class PatchSetFile {
             status = Status.MODIFIED;
         } else if (TextUtils.equals(statusString, "A")) {
             status = Status.ADDED;
+        } else if (TextUtils.equals(statusString, "D")) {
+            status = Status.DELETED;
         }
         if (status == null) {
             throw new IllegalArgumentException("Unknown status: " + statusString);

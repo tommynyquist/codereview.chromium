@@ -16,7 +16,7 @@ public class PatchSet {
     private final List<PatchSetFile> files;
 
     public PatchSet(String message, List<PatchSetFile> files) {
-        this.message = message;
+        this.message = message != null ? message : "";
         this.files = files;
     }
 
@@ -28,7 +28,7 @@ public class PatchSet {
             JSONObject meta = filesJsonObject.getJSONObject(file);
             files.add(PatchSetFile.from(file, meta));
         }
-        String message = jsonObject.getString("message");
+        String message = !jsonObject.isNull("message") ? jsonObject.getString("message") : null;
         return new PatchSet(message, files);
     }
 

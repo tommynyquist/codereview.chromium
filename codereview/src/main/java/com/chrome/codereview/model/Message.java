@@ -1,10 +1,17 @@
 package com.chrome.codereview.model;
 
+import android.content.Context;
+
+import com.chrome.codereview.utils.DateUtils;
+import com.chrome.codereview.utils.EmailUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -12,44 +19,99 @@ import java.util.List;
  */
 public class Message {
 
-    private static final String LGTM = "lgtm";
-    private static final String NOT_LGTM = "not lgtm";
-    private static final String RSLGTM = "rslgtm";
+    public enum Decoration {
+        LGTM(android.R.color.holo_green_dark) {
+            @Override
+            public boolean appliesTo(Message message) {
+                return message.approval;
+            }
+        },
+        NOT_LGTM(android.R.color.holo_red_dark) {
+            @Override
+            public boolean appliesTo(Message message) {
+                return message.disapproval;
+            }
+        },
+        COMMITTED(android.R.color.holo_blue_dark) {
 
-    public Message(String text, String sender) {
-        this.text = text;
-        this.sender = sender;
+            private static final String COMMIT_BY_BOT = "Change committed as ";
+            private static final String COMMIT_MANUALLY = "Committed patchset";
+
+            @Override
+            public boolean appliesTo(Message message) {
+                return message.text().startsWith(COMMIT_BY_BOT) || message.text().startsWith(COMMIT_MANUALLY);
+            }
+        };
+
+        private final String prefix;
+        private final int color;
+
+        Decoration(int color) {
+            this(null, color);
+        }
+
+        Decoration(String prefix, int color) {
+            this.prefix = prefix;
+            this.color = color;
+        }
+
+        public int color(Context context) {
+            return context.getResources().getColor(color);
+        }
+
+        public boolean appliesTo(Message message) {
+            return prefix != null && message.text().startsWith(prefix);
+        }
     }
 
     private final String text;
+    private final String senderEmail;
+    private final String sender;
+    private final Date date;
+    private final boolean approval;
+    private final boolean disapproval;
 
-    public String getSender() {
-        return sender;
+    public Message(String text, String senderEmail, Date date, boolean approval, boolean disapproval) {
+        this.text = text;
+        this.senderEmail = senderEmail;
+        this.date = date;
+        this.approval = approval;
+        this.disapproval = disapproval;
+        this.sender = EmailUtils.retrieveAccountName(senderEmail);
     }
 
-    public String getText() {
+    public String sender() {
+        return this.sender;
+    }
+
+    public String senderEmail() {
+        return senderEmail;
+    }
+
+    public String text() {
         return text;
     }
 
-    public Reviewer.Opinion reviewerOpinion() {
-        if (text.startsWith(RSLGTM)) {
-            return Reviewer.Opinion.LGTM;
-        }
-        if (text.startsWith(LGTM)) {
-            return Reviewer.Opinion.LGTM;
-        }
-        if (text.startsWith(NOT_LGTM)) {
-            return Reviewer.Opinion.NOT_LGTM;
-        }
-        return Reviewer.Opinion.NO_OPINION;
+    public Date date() {
+        return date;
     }
 
-    private final String sender;
+    public Decoration decoration() {
+        for (Decoration decoration : Decoration.values()) {
+            if (decoration.appliesTo(this)) {
+                return decoration;
+            }
+        }
+        return null;
+    }
 
-    public static Message from(JSONObject jsonObject) throws JSONException {
+    public static Message from(JSONObject jsonObject) throws JSONException, ParseException {
         String sender = jsonObject.getString("sender");
         String text = jsonObject.getString("text");
-        return new Message(text, sender);
+        Date date = DateUtils.getDate(jsonObject, "date");
+        boolean approval = jsonObject.getBoolean("approval");
+        boolean disapproval = jsonObject.getBoolean("disapproval");
+        return new Message(text, sender, date, approval, disapproval);
     }
 
     public static List<Message> from(JSONArray jsonArray) {
@@ -57,7 +119,7 @@ public class Message {
         for (int i = 0; i < jsonArray.length(); i++) {
             try {
                 result.add(from(jsonArray.getJSONObject(i)));
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

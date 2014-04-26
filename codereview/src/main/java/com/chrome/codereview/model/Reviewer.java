@@ -15,43 +15,37 @@ import java.util.Map;
  */
 public class Reviewer {
 
-    public enum Opinion {
-        LGTM,
-        NOT_LGTM,
-        NO_OPINION
-    }
-
     private final String email;
     private final String name;
-    private final Opinion opinion;
+    private final Message.Decoration decoration;
 
-    public Reviewer(String email, Opinion opinion) {
+    public Reviewer(String email, Message.Decoration decoration) {
         this.name = EmailUtils.retrieveAccountName(email);
         this.email = email;
-        this.opinion = opinion;
+        this.decoration = decoration;
     }
 
     public String name() {
         return name;
     }
 
-    public Opinion opinion() {
-        return opinion;
+    public Message.Decoration decoration() {
+        return decoration;
     }
 
     public static List<Reviewer> from(JSONArray reviewerEmails, List<Message> issuesMessages) throws JSONException {
-        Map<String, Opinion> reviewerOpinion = new HashMap<String, Opinion>();
+        Map<String, Message.Decoration> reviewerOpinion = new HashMap<String, Message.Decoration>();
         for (Message message : issuesMessages) {
-            Opinion opinion = message.reviewerOpinion();
-            if (opinion != Opinion.NO_OPINION) {
-                reviewerOpinion.put(message.getSender(), opinion);
+            Message.Decoration opinion = message.decoration();
+            if (opinion != null) {
+                reviewerOpinion.put(message.senderEmail(), opinion);
             }
         }
         List<Reviewer> reviewers = new ArrayList<Reviewer>(reviewerEmails.length());
         for (int i = 0; i < reviewerEmails.length(); i++) {
             String reviewerEmail = reviewerEmails.getString(i);
-            Opinion opinion = reviewerOpinion.get(reviewerEmail);
-            reviewers.add(new Reviewer(reviewerEmail, opinion != null ? opinion : Opinion.NO_OPINION));
+            Message.Decoration decoration = reviewerOpinion.get(reviewerEmail);
+            reviewers.add(new Reviewer(reviewerEmail, decoration));
         }
         return reviewers;
     }
