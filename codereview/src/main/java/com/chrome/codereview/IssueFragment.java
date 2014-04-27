@@ -22,6 +22,9 @@ import android.widget.ExpandableListView;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.utils.CachedLoader;
+import com.google.android.gms.auth.GoogleAuthException;
+
+import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
 
@@ -64,6 +67,10 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
             try {
                 serverCaller().publish(publishData);
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (GoogleAuthException e) {
+                e.printStackTrace();
+            } catch (AuthenticationException e) {
                 e.printStackTrace();
             }
             return null;

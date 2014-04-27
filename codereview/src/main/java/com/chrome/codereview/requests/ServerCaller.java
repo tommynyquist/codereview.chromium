@@ -40,7 +40,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by sergeyv on 16/4/14.
@@ -56,6 +58,8 @@ public class ServerCaller {
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String COOKIE_PREFERENCE = "ServerCaller_COOKIE_PREFERENCE";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
+    private static final String XSRF_TOKEN_TIME_PREFERENCE = "ServerCaller_XSRF_TOKEN_TIME_PREFERENCE";
+    private static final int TOKEN_LIFE_TIME = 25;//min
     private static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
     private static final String CHROMIUM_EMAIL = "@chromium.org";
     private static final String TOKEN_TYPE = "ah";
@@ -140,7 +144,7 @@ public class ServerCaller {
         }
     }
 
-    public void publish(PublishData data) throws IOException {
+    public void publish(PublishData data) throws IOException, AuthenticationException, GoogleAuthException {
         Uri uri = BASE_URL.buildUpon().appendPath(data.issueId() + "").appendPath(PUBLISH).build();
         HttpPost post = new HttpPost(uri.toString());
         ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
@@ -161,10 +165,15 @@ public class ServerCaller {
         get.addHeader("X-Requesting-XSRF-Token", "");
         String xsrfToken = executeRequest(get);
         save(XSRF_TOKEN_PREFERENCE, xsrfToken);
+        save(XSRF_TOKEN_TIME_PREFERENCE, System.currentTimeMillis());
     }
 
-    private String getXsrfToken() {
+    private String getXsrfToken() throws IOException, GoogleAuthException, AuthenticationException {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        long timeDiff = System.currentTimeMillis() - preferences.getLong(XSRF_TOKEN_TIME_PREFERENCE, 0);
+        if (!preferences.contains(XSRF_TOKEN_PREFERENCE) || TimeUnit.MINUTES.toMillis(TOKEN_LIFE_TIME) < timeDiff) {
+            tryToAuthenticate();
+        }
         return preferences.getString(XSRF_TOKEN_PREFERENCE, "");
     }
 
@@ -241,10 +250,14 @@ public class ServerCaller {
         return new JSONObject(executeRequest(new HttpGet(uri.toString())));
     }
 
-
     private void save(String name, String value) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         preferences.edit().putString(name, value).apply();
+    }
+
+    private void save(String name, long value) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        preferences.edit().putLong(name, value).apply();
     }
 
     private void clearCookieAndToken() {
