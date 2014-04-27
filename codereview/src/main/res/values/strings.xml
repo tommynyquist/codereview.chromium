@@ -19,7 +19,14 @@
     <string name="ago">ago</string>
     <string name="patchset">Patch Set %s:&#160;</string>
     <string name="empty_message">&lt;empty message&gt;</string>
-    <string name="total_comments">Total comments: %s</string>
+    <string name="comments_number">%s comments</string>
+
+    <string name="file_status_modified">M</string>
+    <string name="file_status_added">A</string>
+    <string name="file_status_deleted">D</string>
+
+    <string name="lines_added">+%s lines</string>
+    <string name="lines_removed">-%s lines</string>
 
     <string name="messages">MESSAGES</string>
     <string name="patchsets">PATCH SETS</string>

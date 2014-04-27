@@ -2,6 +2,9 @@ package com.chrome.codereview;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,15 +63,15 @@ class IssueAdapter extends BaseExpandableListAdapter {
         return convertView;
     }
 
-    public View getPatchSetView(int position, View convertView, ViewGroup parent) {
+    public View getPatchSetView(int position, View convertView, ViewGroup parent, boolean isExpanded) {
         PatchSet patchSet = (PatchSet) getGroup(position);
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.patchset_item, parent, false);
         }
         String patchSetText = context.getString(R.string.patchset, position) + patchSet.message();
         ViewUtils.setText(convertView, R.id.patchset_message, patchSetText);
-        ViewUtils.setText(convertView, R.id.total_comments, context.getString(R.string.total_comments, patchSet.numComments()));
-        convertView.findViewById(R.id.list_divider).setVisibility(position == issue.patchSets().size() ? View.INVISIBLE : View.VISIBLE);
+        fillStatsView(convertView, patchSet.linesAdded(), patchSet.linesRemoved(), patchSet.numComments());
+        convertView.findViewById(R.id.list_divider).setVisibility(!isExpanded && position == issue.patchSets().size() ? View.INVISIBLE : View.VISIBLE);
         return convertView;
     }
 
@@ -139,7 +142,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
         View result = null;
         switch (getGroupType(groupPosition)) {
             case PATCH_SET_GROUP_TYPE:
-                result = getPatchSetView(groupPosition, convertView, parent);
+                result = getPatchSetView(groupPosition, convertView, parent, isExpanded);
                 break;
             case MESSAGE_GROUP_TYPE:
                 result = getMessageView((Message) getGroup(groupPosition), convertView, parent, isExpanded);
@@ -175,8 +178,48 @@ class IssueAdapter extends BaseExpandableListAdapter {
             convertView = inflater.inflate(R.layout.patchset_file_item, parent, false);
         }
         ViewUtils.setText(convertView, R.id.file_name, patchSetFile.path());
+        fillFileStatusView((TextView) convertView.findViewById(R.id.file_status), patchSetFile.status());
+        fillStatsView(convertView, patchSetFile.numAdded(), patchSetFile.numRemoved(), patchSetFile.numberOfComments());
         return convertView;
     }
+
+
+    private void fillFileStatusView(TextView view, PatchSetFile.Status status) {
+        int color = 0;
+        int text = 0;
+        switch (status) {
+            case MODIFIED:
+                color = android.R.color.holo_blue_dark;
+                text = R.string.file_status_modified;
+                break;
+            case ADDED:
+                color = android.R.color.holo_green_dark;
+                text = R.string.file_status_added;
+                break;
+            case DELETED:
+                color = android.R.color.holo_red_dark;
+                text = R.string.file_status_deleted;
+                break;
+        }
+        view.setTextColor(context.getResources().getColor(color));
+        view.setText(text);
+    }
+
+    public void fillStatsView(View convertView, int numAdded, int numRemoved, int numComments) {
+        ForegroundColorSpan greenSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_green_dark));
+        ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_red_dark));
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        CharSequence linesAdded = context.getString(R.string.lines_added, numAdded);
+        CharSequence linesRemoved = context.getString(R.string.lines_removed, numRemoved);
+        builder.append(linesAdded);
+        builder.setSpan(greenSpan, 0, linesAdded.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        builder.append(", ");
+        builder.append(linesRemoved);
+        builder.setSpan(redSpan, linesAdded.length() + 2, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        ViewUtils.setText(convertView, R.id.diff_stats, builder);
+        ViewUtils.setText(convertView, R.id.comments_number, context.getString(R.string.comments_number, numComments));
+    }
+
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {

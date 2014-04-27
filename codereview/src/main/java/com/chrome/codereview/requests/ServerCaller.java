@@ -163,7 +163,7 @@ public class ServerCaller {
     }
 
     private PatchSet loadPatchSet(int issueId, int patchSetId) {
-        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendPath(patchSetId + "").build();
+        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendPath(patchSetId + "").appendQueryParameter("comments", "true").build();
         try {
             return PatchSet.from(executeGetJSONRequest(uri));
         } catch (Exception e) {

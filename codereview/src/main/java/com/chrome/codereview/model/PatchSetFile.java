@@ -4,14 +4,15 @@ import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
+
+import java.util.List;
 
 /**
  * Created by sergeyv on 21/4/14.
  */
 public class PatchSetFile {
 
-    enum Status {
+    public enum Status {
         ADDED,
         MODIFIED,
         DELETED,
@@ -21,12 +22,14 @@ public class PatchSetFile {
     private final String path;
     private final int numAdded;
     private final int numRemoved;
+    private final List<Comment> comments;
 
-    public PatchSetFile(Status status, String path, int numAdded, int numRemoved) {
+    public PatchSetFile(Status status, String path, int numAdded, int numRemoved, List<Comment> comments) {
         this.status = status;
         this.path = path;
         this.numAdded = numAdded;
         this.numRemoved = numRemoved;
+        this.comments = comments;
     }
 
     public Status status() {
@@ -49,6 +52,10 @@ public class PatchSetFile {
         return numRemoved;
     }
 
+    public int numberOfComments() {
+        return this.comments.size();
+    }
+
     public static PatchSetFile from(String path, JSONObject metaData) throws JSONException {
         int numAdded = metaData.getInt("num_added");
         int numRemoved = metaData.getInt("num_removed");
@@ -64,6 +71,7 @@ public class PatchSetFile {
         if (status == null) {
             throw new IllegalArgumentException("Unknown status: " + statusString);
         }
-        return new PatchSetFile(status, path, numAdded, numRemoved);
+        List<Comment> comments = Comment.from(metaData.getJSONArray("messages"));
+        return new PatchSetFile(status, path, numAdded, numRemoved, comments);
     }
 }

@@ -8,32 +8,31 @@
     <FrameLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingLeft="@dimen/list_item_horizontal_padding"
         android:paddingRight="@dimen/list_item_horizontal_padding">
 
-        <ImageView
-            android:id="@+id/expander"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/expander_group" />
 
         <TextView
             android:id="@+id/patchset_message"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
             android:textStyle="bold"
             android:singleLine="true" />
 
+        <ImageView
+            android:id="@+id/expander"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="right"
+            android:src="@drawable/expander_group" />
+
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/total_comments"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/list_item_horizontal_padding"
-        android:paddingRight="@dimen/list_item_horizontal_padding"
-        android:textStyle="italic" />
+    <include
+        layout="@layout/diff_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <ImageView
         android:id="@+id/list_divider"

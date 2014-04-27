@@ -10,7 +10,7 @@ public class ViewUtils {
 
     private ViewUtils() {}
 
-    public static void setText(View view, int id, String text) {
+    public static void setText(View view, int id, CharSequence text) {
         TextView textView = (TextView) view.findViewById(id);
         textView.setText(text);
     }

@@ -43,6 +43,22 @@ public class PatchSet {
         return files;
     }
 
+    public int linesAdded() {
+        int result = 0;
+        for (PatchSetFile file: files()) {
+            result += file.numAdded();
+        }
+        return result;
+    }
+
+    public int linesRemoved() {
+        int result = 0;
+        for (PatchSetFile file: files()) {
+            result += file.numRemoved();
+        }
+        return result;
+    }
+
     public int numComments() {
         return numComments;
     }

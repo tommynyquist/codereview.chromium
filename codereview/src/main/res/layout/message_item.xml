@@ -24,7 +24,7 @@
             android:layout_height="fill_parent"
             android:orientation="vertical">
 
-            <FrameLayout
+            <RelativeLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="6dp"
@@ -34,24 +34,25 @@
                     android:id="@+id/expander"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
                     android:src="@drawable/expander_group"/>
 
                 <TextView
                     android:id="@+id/sender"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_marginLeft="20dp"
+                    android:layout_alignParentLeft="true"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="right"
+                    android:layout_marginRight="5dp"
+                    android:layout_toLeftOf="@+id/expander"
                     android:textColor="@android:color/tertiary_text_light"/>
 
-            </FrameLayout>
+            </RelativeLayout>
 
             <TextView
                 android:id="@+id/message_text"
