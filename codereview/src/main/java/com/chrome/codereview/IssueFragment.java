@@ -1,26 +1,39 @@
 package com.chrome.codereview;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.Fragment;
-import android.app.ListFragment;
 import android.app.LoaderManager;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Loader;
 import android.os.Bundle;
+import android.text.Editable;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ExpandableListView;
 
 import com.chrome.codereview.model.Issue;
-import com.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.utils.CachedLoader;
+
+import java.io.IOException;
 
 /**
  * Created by sergeyv on 18/4/14.
  */
-public class IssueFragment extends Fragment implements LoaderManager.LoaderCallbacks<Issue> {
+public class IssueFragment extends Fragment implements DialogInterface.OnClickListener {
 
     public static final String EXTRA_ISSUE_ID = "EXTRA_ISSUE_ID";
+
+    private static final int ISSUE_LOADER_ID = 0;
+    private static final int PUBLISH_LOADER_ID = 1;
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -33,21 +46,83 @@ public class IssueFragment extends Fragment implements LoaderManager.LoaderCallb
 
         @Override
         public Issue loadInBackground() {
-            return ServerCaller.from(getContext()).loadIssueWithPatchSetData(issueId);
+            return serverCaller().loadIssueWithPatchSetData(issueId);
         }
     }
 
+    private static class PublishLoaded extends CachedLoader<Void> {
+
+        private PublishData publishData;
+
+        public PublishLoaded(Context context, PublishData publishData) {
+            super(context);
+            this.publishData = publishData;
+        }
+
+        @Override
+        public Void loadInBackground() {
+            try {
+                serverCaller().publish(publishData);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private LoaderManager.LoaderCallbacks<Issue> issueLoaderCallback = new LoaderManager.LoaderCallbacks<Issue>() {
+
+        @Override
+        public Loader<Issue> onCreateLoader(int id, Bundle args) {
+            return new IssueLoader(getActivity(), issueId);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Issue> loader, Issue issue) {
+            issueAdapter.setIssue(issue);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Issue> loader) {
+            issueAdapter.setIssue(null);
+        }
+    };
+
+    private LoaderManager.LoaderCallbacks<Void> publishLoaderCallback = new LoaderManager.LoaderCallbacks<Void>() {
+
+        @Override
+        public Loader<Void> onCreateLoader(int id, Bundle args) {
+            return new PublishLoaded(getActivity(), lastPublishData);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Void> loader, Void v) {
+            lastPublishData = null;
+            publishProgressDialog.dismiss();
+            getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Void> loader) {
+        }
+    };
+
+
     private int issueId;
+    private PublishData lastPublishData;
+    private AlertDialog publishDialog;
+    private ProgressDialog publishProgressDialog;
     private IssueAdapter issueAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         issueId = getActivity().getIntent().getIntExtra(EXTRA_ISSUE_ID, -1);
         if (issueId == -1) {
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
         issueAdapter = new IssueAdapter(getActivity());
-        getLoaderManager().initLoader(0, new Bundle(), this);
+        getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
         View view =  inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
         listView.setAdapter(issueAdapter);
@@ -55,17 +130,39 @@ public class IssueFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     @Override
-    public Loader<Issue> onCreateLoader(int i, Bundle bundle) {
-        return new IssueLoader(getActivity(), issueId);
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.issue_detail, menu);
     }
 
     @Override
-    public void onLoadFinished(Loader<Issue> issueLoader, Issue issue) {
-        issueAdapter.setIssue(issue);
+    public void onClick(DialogInterface dialog, int which) {
+        Editable text = ((EditText) publishDialog.findViewById(R.id.message_text)).getText();
+        lastPublishData = new PublishData(text.toString(),issueId);
+        publishProgressDialog = new ProgressDialog(getActivity());
+        publishProgressDialog.setIndeterminate(true);
+        publishProgressDialog.setMessage(getActivity().getString(R.string.publish_progress_message));
+        publishProgressDialog.show();
+        getLoaderManager().restartLoader(PUBLISH_LOADER_ID, null, this.publishLoaderCallback);
+    }
+
+    public void showPublishDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.publish_action);
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        builder.setView(inflater.inflate(R.layout.publish_dialog, null));
+        builder.setPositiveButton(R.string.publish_action, this);
+        builder.setNeutralButton(R.string.quick_lgtm, null);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        publishDialog = builder.create();
+        publishDialog.show();
     }
 
     @Override
-    public void onLoaderReset(Loader<Issue> issueLoader) {
-        issueAdapter.setIssue(null);
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_publish) {
+            showPublishDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import com.chrome.codereview.model.PatchSet;
+import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -16,21 +17,27 @@ import com.chrome.codereview.CodereviewApplication;
 import com.chrome.codereview.model.Issue;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +64,7 @@ public class ServerCaller {
     private static final Uri XSRF_URL = BASE_URL.buildUpon().appendPath("xsrf_token").build();
     private static final Uri AUTH_COOKIE_URL = BASE_URL.buildUpon().appendEncodedPath("_ah/login").appendQueryParameter("continue", "nowhere").build();
     private static final Uri ISSUE_API_URL = BASE_URL.buildUpon().appendPath("api").build();
+    private static final String PUBLISH = "publish";
 
     private final DefaultHttpClient httpClient;
     private Account chromiumAccount;
@@ -132,11 +140,32 @@ public class ServerCaller {
         }
     }
 
+    public void publish(PublishData data) throws IOException {
+        Uri uri = BASE_URL.buildUpon().appendPath(data.issueId() + "").appendPath(PUBLISH).build();
+        HttpPost post = new HttpPost(uri.toString());
+        ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        nameValuePairs.add(new BasicNameValuePair("xsrf_token", getXsrfToken()));
+        nameValuePairs.addAll(data.toList());
+        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(nameValuePairs);
+        post.setEntity(formEntity);
+        HttpResponse response = httpClient.execute(post);
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            entity.consumeContent();
+        }
+
+    }
+
     private void loadAndSaveXSRFToken() throws IOException {
         HttpGet get = new HttpGet(XSRF_URL.toString());
         get.addHeader("X-Requesting-XSRF-Token", "");
         String xsrfToken = executeRequest(get);
         save(XSRF_TOKEN_PREFERENCE, xsrfToken);
+    }
+
+    private String getXsrfToken() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getString(XSRF_TOKEN_PREFERENCE, "");
     }
 
     private void loadAndSaveCookie(String authToken) throws AuthenticationException, IOException {

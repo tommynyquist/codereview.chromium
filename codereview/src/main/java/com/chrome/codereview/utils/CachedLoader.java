@@ -3,6 +3,8 @@ package com.chrome.codereview.utils;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
+import com.chrome.codereview.requests.ServerCaller;
+
 /**
  * Created by sergeyv on 19/4/14.
  */
@@ -39,6 +41,10 @@ public abstract class CachedLoader<T> extends AsyncTaskLoader<T> {
     @Override
     protected void onStopLoading() {
         cancelLoad();
+    }
+
+    public ServerCaller serverCaller() {
+        return ServerCaller.from(getContext());
     }
 
 }

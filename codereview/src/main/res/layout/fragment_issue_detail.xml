@@ -8,7 +8,6 @@
     android:textIsSelectable="true"
     tools:context="com.chrome.codereview.IssueFragment">
 
-
     <ExpandableListView
         android:id="@android:id/list"
         android:layout_width="match_parent"

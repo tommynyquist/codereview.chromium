@@ -30,6 +30,12 @@
 
     <string name="messages">MESSAGES</string>
     <string name="patchsets">PATCH SETS</string>
+    <string name="publish_action">publish</string>
+
+    <string name="quick_lgtm">Quick LGTM</string>
+    <string name="subject_hint">Subject</string>
+    <string name="hint_message">Compose message</string>
+    <string name="publish_progress_message">Publishing your message</string>
 
     <plurals name="year">
         <item quantity="one">year</item>
