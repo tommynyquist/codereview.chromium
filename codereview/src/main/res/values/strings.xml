@@ -36,6 +36,8 @@
     <string name="subject_hint">Subject</string>
     <string name="hint_message">Compose message</string>
     <string name="publish_progress_message">Publishing your message</string>
+    <string name="hint_reviewers">Reviewers</string>
+    <string name="hint_cc">CC</string>
 
     <plurals name="year">
         <item quantity="one">year</item>

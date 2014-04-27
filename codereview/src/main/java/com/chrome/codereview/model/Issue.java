@@ -1,5 +1,7 @@
 package com.chrome.codereview.model;
 
+import android.text.TextUtils;
+
 import com.chrome.codereview.utils.DateUtils;
 
 import org.json.JSONArray;
@@ -24,9 +26,10 @@ public class Issue {
     private final List<Reviewer> reviewers;
     private final Date lastModified;
     private final List<PatchSet> patchSets;
+    private final String ccd;
     private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, int id) {
+    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, String ccd, int id) {
         this.owner = owner;
         this.subject = subject;
         this.closed = closed;
@@ -34,6 +37,7 @@ public class Issue {
         this.reviewers = reviewers;
         this.lastModified = lastModified;
         this.patchSets = patchSets;
+        this.ccd = ccd;
         this.id = id;
     }
 
@@ -46,7 +50,12 @@ public class Issue {
             List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
             List<Reviewer> reviewers = Reviewer.from(jsonObject.getJSONArray("reviewers"), messages);
             Date lastModified = DateUtils.getDate(jsonObject, "modified");
-            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, patchSets, issue);
+            JSONArray ccJsonArray = jsonObject.getJSONArray("cc");
+            List<String> ccList = new ArrayList<String>(ccJsonArray.length());
+            for (int i = 0; i < ccJsonArray.length(); i++) {
+                ccList.add(ccJsonArray.getString(i));
+            }
+            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, patchSets, TextUtils.join(", ", ccList), issue);
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -91,6 +100,10 @@ public class Issue {
 
     public int id() {
         return id;
+    }
+
+    public String ccdString() {
+        return ccd;
     }
 
     public boolean isClosed() {

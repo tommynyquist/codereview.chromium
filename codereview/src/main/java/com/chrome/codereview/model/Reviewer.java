@@ -50,4 +50,8 @@ public class Reviewer {
         return reviewers;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
 }

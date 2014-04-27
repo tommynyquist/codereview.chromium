@@ -160,5 +160,4 @@ class UserIssuesAdapter extends BaseAdapter {
         return builder;
     }
 
-
 }

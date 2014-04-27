@@ -6,13 +6,28 @@
     android:orientation="vertical">
 
     <EditText
-        android:id="@+id/subject_text"
+        android:id="@+id/publish_subject"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/subject_hint"/>
 
     <EditText
-        android:id="@+id/message_text"
+        android:id="@+id/publish_reviewers"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:hint="@string/hint_reviewers"/>
+
+
+    <EditText
+        android:id="@+id/publish_cc"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:hint="@string/hint_cc"/>
+
+    <EditText
+        android:id="@+id/publish_message"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/hint_message"/>
