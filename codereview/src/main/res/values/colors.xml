@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text">#1E1E1E</color>
+    <color name="diff_default_background">#F9F9F9</color>
+    <color name="diff_marker_bg">#EAF2F5</color>
+    <color name="diff_marker_text">#999999</color>
+    <color name="diff_add">#DDFFDD</color>
+    <color name="diff_add_text">#528E4C</color>
+    <color name="diff_remove">#FFDDDD</color>
+    <color name="diff_remove_text">#932121</color>
+</resources>
