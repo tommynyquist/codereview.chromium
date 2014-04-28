@@ -6,6 +6,7 @@ import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -18,7 +19,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 
+import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.model.PatchSet;
+import com.chrome.codereview.model.PatchSetFile;
 import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.ViewUtils;
@@ -27,16 +31,23 @@ import com.google.android.gms.auth.GoogleAuthException;
 import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by sergeyv on 18/4/14.
  */
-public class IssueFragment extends Fragment implements DialogInterface.OnClickListener {
+public class IssueDetailsFragment extends Fragment implements DialogInterface.OnClickListener, ExpandableListView.OnChildClickListener {
 
     public static final String EXTRA_ISSUE_ID = "EXTRA_ISSUE_ID";
 
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
+    private static final int DIFF_LOADER_ID = 2;
+    private static final String PATCHSET_ID = "patchset_id";
+    private static final String PATCHSET_FILE_PATH = "patchset_file_path";
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -77,6 +88,34 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
         }
     }
 
+    private static class DiffLoader extends CachedLoader<Diff> {
+
+        private final int issueId;
+        private final int patchsetId;
+        private final String continueToPath;
+
+        public DiffLoader(Context context, int issueId, int patchSetId, String continueToPath) {
+            super(context);
+            this.issueId = issueId;
+            patchsetId = patchSetId;
+            this.continueToPath = continueToPath;
+        }
+
+        @Override
+        public Diff loadInBackground() {
+            try {
+                return serverCaller().loadDiff(issueId, patchsetId);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        String continueToPath() {
+            return continueToPath;
+        }
+    }
+
     private LoaderManager.LoaderCallbacks<Issue> issueLoaderCallback = new LoaderManager.LoaderCallbacks<Issue>() {
 
         @Override
@@ -86,14 +125,14 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
 
         @Override
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
-            IssueFragment.this.issue = issue;
-            issueAdapter.setIssue(issue);
+            IssueDetailsFragment.this.issue = issue;
+            issueDetailsAdapter.setIssue(issue);
         }
 
         @Override
         public void onLoaderReset(Loader<Issue> loader) {
             issue = null;
-            issueAdapter.setIssue(null);
+            issueDetailsAdapter.setIssue(null);
         }
     };
 
@@ -116,13 +155,33 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
         }
     };
 
+    private LoaderManager.LoaderCallbacks<Diff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<Diff>() {
+
+        @Override
+        public Loader<Diff> onCreateLoader(int id, Bundle args) {
+            return new DiffLoader(getActivity(), issueId, args.getInt(PATCHSET_ID), args.getString(PATCHSET_FILE_PATH));
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Diff> loader, Diff v) {
+            if (v != null) {
+                patchSetToDiff.put(v.patchSetId(), v);
+                startDiffActivity(v.patchSetId(), ((DiffLoader) loader).continueToPath());
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Diff> loader) {
+        }
+    };
 
     private int issueId;
     private Issue issue;
+    private Map<Integer, Diff> patchSetToDiff = new HashMap<Integer, Diff>();
     private PublishData lastPublishData;
     private AlertDialog publishDialog;
     private ProgressDialog publishProgressDialog;
-    private IssueAdapter issueAdapter;
+    private IssueDetailsAdapter issueDetailsAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -131,11 +190,12 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
         if (issueId == -1) {
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
-        issueAdapter = new IssueAdapter(getActivity());
+        issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
         getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
-        View view =  inflater.inflate(R.layout.fragment_issue_detail, container);
+        View view = inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
-        listView.setAdapter(issueAdapter);
+        listView.setOnChildClickListener(this);
+        listView.setAdapter(issueDetailsAdapter);
         return view;
     }
 
@@ -145,7 +205,7 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
     }
 
     private String getTextFromPublishDialog(int id) {
-        return  ((EditText) publishDialog.findViewById(id)).getText().toString();
+        return ((EditText) publishDialog.findViewById(id)).getText().toString();
     }
 
     @Override
@@ -160,6 +220,25 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
         publishProgressDialog.setMessage(getActivity().getString(R.string.publish_progress_message));
         publishProgressDialog.show();
         getLoaderManager().restartLoader(PUBLISH_LOADER_ID, null, this.publishLoaderCallback);
+    }
+
+    @Override
+    public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+        Object patchSetObject = issueDetailsAdapter.getGroup(groupPosition);
+        if (!(patchSetObject instanceof PatchSet)) {
+            return false;
+        }
+        PatchSet patchSet = (PatchSet) patchSetObject;
+        PatchSetFile file = issueDetailsAdapter.getChild(groupPosition, childPosition);
+        if (!patchSetToDiff.containsKey(patchSet.id())) {
+            Bundle args = new Bundle();
+            args.putInt(PATCHSET_ID, patchSet.id());
+            args.putString(PATCHSET_FILE_PATH, file.path());
+            getLoaderManager().restartLoader(DIFF_LOADER_ID, args, this.diffLoaderCallback);
+            return true;
+        }
+        startDiffActivity(patchSet.id(), file.path());
+        return true;
     }
 
     public void showPublishDialog() {
@@ -188,5 +267,12 @@ public class IssueFragment extends Fragment implements DialogInterface.OnClickLi
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startDiffActivity(int patchSetId, String path) {
+        Intent intent = new Intent(getActivity(), DiffActivity.class);
+        List<String> diff = patchSetToDiff.get(patchSetId).diffForFile(path);
+        intent.putExtra(DiffFragment.DIFF_EXTRA, new ArrayList<String>(diff));
+        startActivity(intent);
     }
 }

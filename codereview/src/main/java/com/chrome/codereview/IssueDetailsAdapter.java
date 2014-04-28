@@ -22,7 +22,7 @@ import com.chrome.codereview.utils.ViewUtils;
 /**
  * Created by sergeyv on 22/4/14.
  */
-class IssueAdapter extends BaseExpandableListAdapter {
+class IssueDetailsAdapter extends BaseExpandableListAdapter {
 
     private static final int PATCH_SET_GROUP_TYPE = 0;
     private static final int MESSAGE_GROUP_TYPE = 1;
@@ -32,7 +32,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
     private Context context;
     private LayoutInflater inflater;
 
-    public IssueAdapter(Context context) {
+    public IssueDetailsAdapter(Context context) {
         super();
         this.context = context;
         inflater = LayoutInflater.from(context);
@@ -118,8 +118,8 @@ class IssueAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public Object getChild(int groupPosition, int childPosition) {
-        return null;
+    public PatchSetFile getChild(int groupPosition, int childPosition) {
+        return issue.patchSets().get(groupPosition - 1).files().get(childPosition);
     }
 
     @Override
@@ -173,7 +173,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
         if (getGroupType(groupPosition) == MESSAGE_GROUP_TYPE) {
             throw new IllegalStateException("No child for message type");
         }
-        PatchSetFile patchSetFile = issue.patchSets().get(groupPosition - 1).files().get(childPosition);
+        PatchSetFile patchSetFile = getChild(groupPosition, childPosition);
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.patchset_file_item, parent, false);
         }
@@ -223,7 +223,7 @@ class IssueAdapter extends BaseExpandableListAdapter {
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return false;
+        return true;
     }
 
     @Override

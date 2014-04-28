@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:textIsSelectable="true"
-    tools:context="com.chrome.codereview.IssueFragment">
+    tools:context="com.chrome.codereview.IssueDetailsFragment">
 
     <ExpandableListView
         android:id="@android:id/list"

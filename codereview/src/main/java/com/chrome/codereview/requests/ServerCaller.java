@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
+import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.model.UserIssues;
@@ -69,6 +70,8 @@ public class ServerCaller {
     private static final Uri AUTH_COOKIE_URL = BASE_URL.buildUpon().appendEncodedPath("_ah/login").appendQueryParameter("continue", "nowhere").build();
     private static final Uri ISSUE_API_URL = BASE_URL.buildUpon().appendPath("api").build();
     private static final String PUBLISH = "publish";
+    private static final String ISSUE_PATH = "issue";
+    private static final Uri DOWNLOAD_DIFF = BASE_URL.buildUpon().appendPath("download").build();
 
     private final DefaultHttpClient httpClient;
     private Account chromiumAccount;
@@ -160,6 +163,12 @@ public class ServerCaller {
 
     }
 
+    public Diff loadDiff(int issueId, int patchSetId) throws IOException {
+        HttpGet get = new HttpGet(DOWNLOAD_DIFF.buildUpon().appendPath(ISSUE_PATH + issueId + "_" + patchSetId + ".diff").build().toString());
+        String diff = executeRequest(get);
+        return new Diff(patchSetId, diff);
+    }
+
     private void loadAndSaveXSRFToken() throws IOException {
         HttpGet get = new HttpGet(XSRF_URL.toString());
         get.addHeader("X-Requesting-XSRF-Token", "");
@@ -203,7 +212,7 @@ public class ServerCaller {
     private PatchSet loadPatchSet(int issueId, int patchSetId) {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendPath(patchSetId + "").appendQueryParameter("comments", "true").build();
         try {
-            return PatchSet.from(executeGetJSONRequest(uri));
+            return PatchSet.from(patchSetId, executeGetJSONRequest(uri));
         } catch (Exception e) {
             e.printStackTrace();
         }

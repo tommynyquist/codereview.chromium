@@ -1,7 +1,7 @@
 <fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/issue_list"
-    android:name="com.chrome.codereview.IssueFragment"
+    android:name="com.chrome.codereview.IssueDetailsFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.chrome.codereview.phone.IssueDetailActivity"

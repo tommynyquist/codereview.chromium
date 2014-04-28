@@ -15,14 +15,16 @@ public class PatchSet {
     private final String message;
     private final List<PatchSetFile> files;
     private final int numComments;
+    private final int patchSetId;
 
-    public PatchSet(String message, List<PatchSetFile> files, int numComments) {
+    public PatchSet(String message, List<PatchSetFile> files, int numComments, int patchSetId) {
         this.numComments = numComments;
+        this.patchSetId = patchSetId;
         this.message = message != null ? message : "";
         this.files = files;
     }
 
-    public static PatchSet from(JSONObject jsonObject) throws JSONException {
+    public static PatchSet from(int patchSetId, JSONObject jsonObject) throws JSONException {
         JSONObject filesJsonObject = jsonObject.getJSONObject("files");
         List<PatchSetFile> files = new ArrayList<PatchSetFile>();
         for (Iterator iterator = filesJsonObject.keys(); iterator.hasNext(); ) {
@@ -32,7 +34,7 @@ public class PatchSet {
         }
         String message = !jsonObject.isNull("message") ? jsonObject.getString("message") : null;
         int numComments = jsonObject.getInt("num_comments");
-        return new PatchSet(message, files, numComments);
+        return new PatchSet(message, files, numComments, patchSetId);
     }
 
     public String message() {
@@ -45,7 +47,7 @@ public class PatchSet {
 
     public int linesAdded() {
         int result = 0;
-        for (PatchSetFile file: files()) {
+        for (PatchSetFile file : files()) {
             result += file.numAdded();
         }
         return result;
@@ -53,7 +55,7 @@ public class PatchSet {
 
     public int linesRemoved() {
         int result = 0;
-        for (PatchSetFile file: files()) {
+        for (PatchSetFile file : files()) {
             result += file.numRemoved();
         }
         return result;
@@ -61,5 +63,9 @@ public class PatchSet {
 
     public int numComments() {
         return numComments;
+    }
+
+    public int id() {
+        return patchSetId;
     }
 }

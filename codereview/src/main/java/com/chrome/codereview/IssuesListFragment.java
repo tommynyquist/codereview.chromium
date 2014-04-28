@@ -72,7 +72,7 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
             return;
         }
         Intent intent = new Intent(getActivity(), IssueDetailActivity.class);
-        intent.putExtra(IssueFragment.EXTRA_ISSUE_ID, issue.id());
+        intent.putExtra(IssueDetailsFragment.EXTRA_ISSUE_ID, issue.id());
         startActivity(intent);
     }
 }

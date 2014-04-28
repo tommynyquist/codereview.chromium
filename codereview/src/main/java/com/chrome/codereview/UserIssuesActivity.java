@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 import com.chrome.codereview.requests.ServerCaller;
 
-public class IssuesActivity extends Activity {
+public class UserIssuesActivity extends Activity {
 
     private static final int REQUEST_LOGIN = 1;
 
