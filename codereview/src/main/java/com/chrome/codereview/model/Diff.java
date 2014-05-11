@@ -1,5 +1,9 @@
 package com.chrome.codereview.model;
 
+import android.content.Context;
+import android.text.TextPaint;
+import android.widget.TextView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +40,7 @@ public class Diff {
                 scanner.nextLine(); //+++ b/
                 continue;
             }
-            diffs.add(line);
+            diffs.add(line.replace(" ", "\u00A0"));
         }
 
     }
