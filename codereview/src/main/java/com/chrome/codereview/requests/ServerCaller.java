@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import com.chrome.codereview.model.Diff;
+import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.model.UserIssues;
@@ -38,10 +39,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -167,6 +166,12 @@ public class ServerCaller {
         HttpGet get = new HttpGet(DOWNLOAD_DIFF.buildUpon().appendPath(ISSUE_PATH + issueId + "_" + patchSetId + ".diff").build().toString());
         String diff = executeRequest(get);
         return new Diff(patchSetId, diff);
+    }
+
+    public FileDiff loadDiff(int issueId, int patchSetId, int patchId) throws IOException {
+        HttpGet get = new HttpGet(DOWNLOAD_DIFF.buildUpon().appendPath(ISSUE_PATH + issueId + "_" + patchSetId + "_" + patchId + ".diff").build().toString());
+        String diff = executeRequest(get);
+        return FileDiff.from(diff);
     }
 
     private void loadAndSaveXSRFToken() throws IOException {

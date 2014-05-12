@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,9 +46,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
-    private static final int DIFF_LOADER_ID = 2;
-    private static final String PATCHSET_ID = "patchset_id";
-    private static final String PATCHSET_FILE_PATH = "patchset_file_path";
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -85,34 +83,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
                 e.printStackTrace();
             }
             return null;
-        }
-    }
-
-    private static class DiffLoader extends CachedLoader<Diff> {
-
-        private final int issueId;
-        private final int patchsetId;
-        private final String continueToPath;
-
-        public DiffLoader(Context context, int issueId, int patchSetId, String continueToPath) {
-            super(context);
-            this.issueId = issueId;
-            patchsetId = patchSetId;
-            this.continueToPath = continueToPath;
-        }
-
-        @Override
-        public Diff loadInBackground() {
-            try {
-                return serverCaller().loadDiff(issueId, patchsetId);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        String continueToPath() {
-            return continueToPath;
         }
     }
 
@@ -155,29 +125,8 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
     };
 
-    private LoaderManager.LoaderCallbacks<Diff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<Diff>() {
-
-        @Override
-        public Loader<Diff> onCreateLoader(int id, Bundle args) {
-            return new DiffLoader(getActivity(), issueId, args.getInt(PATCHSET_ID), args.getString(PATCHSET_FILE_PATH));
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Diff> loader, Diff v) {
-            if (v != null) {
-                patchSetToDiff.put(v.patchSetId(), v);
-                startDiffActivity(v.patchSetId(), ((DiffLoader) loader).continueToPath());
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Diff> loader) {
-        }
-    };
-
     private int issueId;
     private Issue issue;
-    private Map<Integer, Diff> patchSetToDiff = new HashMap<Integer, Diff>();
     private PublishData lastPublishData;
     private AlertDialog publishDialog;
     private ProgressDialog publishProgressDialog;
@@ -230,14 +179,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = issueDetailsAdapter.getChild(groupPosition, childPosition);
-        if (!patchSetToDiff.containsKey(patchSet.id())) {
-            Bundle args = new Bundle();
-            args.putInt(PATCHSET_ID, patchSet.id());
-            args.putString(PATCHSET_FILE_PATH, file.path());
-            getLoaderManager().restartLoader(DIFF_LOADER_ID, args, this.diffLoaderCallback);
-            return true;
-        }
-        startDiffActivity(patchSet.id(), file.path());
+        startDiffActivity(patchSet.id(), file);
         return true;
     }
 
@@ -269,10 +211,12 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         return super.onOptionsItemSelected(item);
     }
 
-    private void startDiffActivity(int patchSetId, String path) {
+    private void startDiffActivity(int patchSetId, PatchSetFile file) {
         Intent intent = new Intent(getActivity(), DiffActivity.class);
-        List<String> diff = patchSetToDiff.get(patchSetId).diffForFile(path);
-        intent.putExtra(DiffFragment.DIFF_EXTRA, new ArrayList<String>(diff));
+        intent.putExtra(DiffFragment.ISSUE_ID_EXTRA, issueId);
+        intent.putExtra(DiffFragment.PATCH_SET_ID_EXTRA, patchSetId);
+        intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());
+        intent.putParcelableArrayListExtra(DiffFragment.COMMENTS_EXTRA, new ArrayList<Parcelable>(file.comments()));
         startActivity(intent);
     }
 }

@@ -18,18 +18,31 @@ public class PatchSetFile {
         DELETED,
     }
 
+    private final int id;
     private final Status status;
     private final String path;
     private final int numAdded;
     private final int numRemoved;
     private final List<Comment> comments;
+    private final int numberOfDrafts;
 
-    public PatchSetFile(Status status, String path, int numAdded, int numRemoved, List<Comment> comments) {
+    public PatchSetFile(int id, Status status, String path, int numAdded, int numRemoved, List<Comment> comments) {
+        this.id = id;
         this.status = status;
         this.path = path;
         this.numAdded = numAdded;
         this.numRemoved = numRemoved;
         this.comments = comments;
+
+        int numberOfDrafts = 0;
+        for (Comment comment: comments) {
+            numberOfDrafts += comment.isDraft() ? 1 : 0;
+        }
+        this.numberOfDrafts = numberOfDrafts;
+    }
+
+    public int id() {
+        return id;
     }
 
     public Status status() {
@@ -52,11 +65,20 @@ public class PatchSetFile {
         return numRemoved;
     }
 
+    public int numberOfDrafts() {
+        return numberOfDrafts;
+    }
+
+    public List<Comment> comments() {
+        return this.comments;
+    }
+
     public int numberOfComments() {
-        return this.comments.size();
+        return this.comments.size() - numberOfDrafts;
     }
 
     public static PatchSetFile from(String path, JSONObject metaData) throws JSONException {
+        int id = metaData.getInt("id");
         int numAdded = metaData.getInt("num_added");
         int numRemoved = metaData.getInt("num_removed");
         String statusString = metaData.getString("status");
@@ -72,6 +94,6 @@ public class PatchSetFile {
             throw new IllegalArgumentException("Unknown status: " + statusString);
         }
         List<Comment> comments = Comment.from(metaData.getJSONArray("messages"));
-        return new PatchSetFile(status, path, numAdded, numRemoved, comments);
+        return new PatchSetFile(id, status, path, numAdded, numRemoved, comments);
     }
 }
