@@ -3,6 +3,7 @@ package com.chrome.codereview.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +25,7 @@ public class PatchSet {
         this.files = files;
     }
 
-    public static PatchSet from(int patchSetId, JSONObject jsonObject) throws JSONException {
+    public static PatchSet from(int patchSetId, JSONObject jsonObject) throws JSONException, ParseException {
         JSONObject filesJsonObject = jsonObject.getJSONObject("files");
         List<PatchSetFile> files = new ArrayList<PatchSetFile>();
         for (Iterator iterator = filesJsonObject.keys(); iterator.hasNext(); ) {

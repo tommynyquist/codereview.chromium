@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -77,7 +78,7 @@ public class PatchSetFile {
         return this.comments.size() - numberOfDrafts;
     }
 
-    public static PatchSetFile from(String path, JSONObject metaData) throws JSONException {
+    public static PatchSetFile from(String path, JSONObject metaData) throws JSONException, ParseException {
         int id = metaData.getInt("id");
         int numAdded = metaData.getInt("num_added");
         int numRemoved = metaData.getInt("num_removed");

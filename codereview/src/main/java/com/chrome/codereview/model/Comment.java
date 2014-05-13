@@ -3,13 +3,16 @@ package com.chrome.codereview.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.EmailUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,6 +25,7 @@ public class Comment implements Parcelable {
     private final String authorEmail;
     private final int line;
     private final boolean left;
+    private final Date date;
 
     public static final Parcelable.Creator<Comment> CREATOR = new Parcelable.Creator<Comment>() {
 
@@ -31,7 +35,8 @@ public class Comment implements Parcelable {
             boolean isDraft = source.readInt() == 1;
             int line = source.readInt();
             boolean left = source.readInt() == 1;
-            return new Comment(isDraft, text, authorEmail, line, left);
+            Date date = new Date(source.readLong());
+            return new Comment(isDraft, text, authorEmail, line, left, date);
         }
 
         @Override
@@ -41,12 +46,13 @@ public class Comment implements Parcelable {
 
     };
 
-    public Comment(boolean isDraft, String text, String author, int line, boolean left) {
+    public Comment(boolean isDraft, String text, String author, int line, boolean left, Date date) {
         this.isDraft = isDraft;
         this.text = text;
         this.authorEmail = author;
         this.line = line;
         this.left = left;
+        this.date = date;
     }
 
     public String text() {
@@ -69,16 +75,21 @@ public class Comment implements Parcelable {
         return line;
     }
 
-    public static Comment from(JSONObject jsonObject) throws JSONException {
+    public Date date() {
+        return date;
+    }
+
+    public static Comment from(JSONObject jsonObject) throws JSONException, ParseException {
         String text = jsonObject.getString("text");
         boolean isDraft = jsonObject.getBoolean("draft");
         String authorEmail = jsonObject.getString("author_email");
         int line = jsonObject.getInt("lineno");
         boolean left = jsonObject.getBoolean("left");
-        return new Comment(isDraft, text, authorEmail, line, left);
+        Date date = DateUtils.getDate(jsonObject, "date");
+        return new Comment(isDraft, text, authorEmail, line, left, date);
     }
 
-    public static List<Comment> from(JSONArray jsonArray) throws JSONException {
+    public static List<Comment> from(JSONArray jsonArray) throws JSONException, ParseException {
         ArrayList<Comment> comments = new ArrayList<Comment>(jsonArray.length());
         for (int i = 0; i < jsonArray.length(); i++) {
             comments.add(from(jsonArray.getJSONObject(i)));
@@ -98,7 +109,7 @@ public class Comment implements Parcelable {
         dest.writeInt(isDraft ? 1 : 0);
         dest.writeInt(line);
         dest.writeInt(left ? 1 : 0);
-
+        dest.writeLong(date.getTime());
     }
 
 }

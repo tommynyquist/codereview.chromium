@@ -10,12 +10,12 @@ import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.BaseAdapter;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.utils.CachedLoader;
+import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.ViewUtils;
 
 import java.io.IOException;
@@ -138,9 +138,11 @@ public class DiffFragment extends ListFragment implements LoaderManager.LoaderCa
 
         public View getCommentView(Comment comment, View convertView, ViewGroup parent) {
             if (convertView == null) {
-                convertView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                convertView = inflater.inflate(R.layout.comment_item, parent, false);
             }
-            ViewUtils.setText(convertView, android.R.id.text1, comment.text());
+            ViewUtils.setText(convertView, R.id.author, comment.author());
+            ViewUtils.setText(convertView, R.id.comment_text, comment.text());
+            ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, comment.date()));
             return convertView;
         }
 
