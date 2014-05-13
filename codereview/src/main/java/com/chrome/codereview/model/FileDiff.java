@@ -61,20 +61,9 @@ public class FileDiff {
         }
 
         private static DiffLine bothSideLine(int leftLineNumber, int rightLineNumber, String text) {
-            return new DiffLine(LineType.LEFT, leftLineNumber, rightLineNumber, text);
+            return new DiffLine(LineType.BOTH_SIDE, leftLineNumber, rightLineNumber, text);
         }
     }
-
-//    private static final Pattern MARKER_PATTERN = Pattern.compile("^@@\\s\\-(\\d+),\\d+\\s\\+(\\d+),\\d+\\s@@.*");
-        /**   @@
-         \s+
-         -
-         (?: (\d+) (?: , (\d+) )?)
-         \s+
-         \+
-         (?: (\d+) (?: , (\d+) )?)
-         \s+
-         @@*/
 
     private static final Pattern MARKER_PATTERN = Pattern.compile("^@@\\s+\\-(?:(\\d+)(?:,(\\d+))?)\\s+\\+(?:(\\d+)(?:,(\\d+))?)\\s+@@.*");
 
