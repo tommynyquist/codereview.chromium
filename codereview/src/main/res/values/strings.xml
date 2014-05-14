@@ -38,6 +38,7 @@
     <string name="publish_progress_message">Publishing your message</string>
     <string name="hint_reviewers">Reviewers</string>
     <string name="hint_cc">CC</string>
+    <string name="new_comment">New comment</string>
 
     <plurals name="year">
         <item quantity="one">year</item>

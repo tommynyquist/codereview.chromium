@@ -1,8 +1,10 @@
 package com.chrome.codereview;
 
+import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
@@ -11,27 +13,37 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
+import com.chrome.codereview.model.PatchSet;
+import com.chrome.codereview.model.PatchSetFile;
+import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.ViewUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by sergeyv on 29/4/14.
  */
-public class DiffFragment extends ListFragment implements LoaderManager.LoaderCallbacks<FileDiff> {
+public class DiffFragment extends ListFragment {
 
     public static final String COMMENTS_EXTRA = "COMMENTS_EXTRA";
     public static final String ISSUE_ID_EXTRA = "ISSUE_ID_EXTRA";
     public static final String PATCH_SET_ID_EXTRA = "PATCH_SET_ID_EXTRA";
     public static final String PATCH_ID_EXTRA = "PATCH_ID_EXTRA";
+
+    private static final int DIFF_LOADER_ID = 0;
+    private static final int INLINE_DRAFT_LOADER_ID = 1;
+    private static final int PATCH_SET_LOADER_ID = 1;
+    private static final String KEY_COMMENT = "comment";
 
     private static class DiffLoader extends CachedLoader<FileDiff> {
 
@@ -57,47 +69,67 @@ public class DiffFragment extends ListFragment implements LoaderManager.LoaderCa
         }
     }
 
-    private static class DiffAdapter extends BaseAdapter {
+    private static class InlineDraftLoader extends CachedLoader<Void> {
+
+        private int issueId;
+        private int patchSetId;
+        private int patchId;
+        private Comment comment;
+
+        public InlineDraftLoader(Context context, int issueId, int patchSetId, int patchId, Comment comment) {
+            super(context);
+            this.issueId = issueId;
+            this.patchSetId = patchSetId;
+            this.patchId = patchId;
+            this.comment = comment;
+        }
+
+        @Override
+        public Void loadInBackground() {
+            try {
+                serverCaller().inlineDraft(issueId, patchSetId, patchId, comment);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private static class PatchSetLoader extends CachedLoader<PatchSet> {
+
+        private int issueId;
+        private int patchSetId;
+
+        public PatchSetLoader(Context context, int issueId, int patchSetId) {
+            super(context);
+            this.issueId = issueId;
+            this.patchSetId = patchSetId;
+        }
+
+        @Override
+        public PatchSet loadInBackground() {
+            return serverCaller().loadPatchSet(issueId, patchSetId);
+        }
+    }
+
+    private class DiffAdapter extends BaseAdapter implements View.OnClickListener {
 
         public static final int LINE_TYPE = 0;
         public static final int COMMENT_TYPE = 1;
         private final List<Object> linesWithComments;
+        private final List<FileDiff.DiffLine> diffs;
         private final LayoutInflater inflater;
         private final Context context;
 
         public DiffAdapter(Context context, List<FileDiff.DiffLine> diffs, List<Comment> comments) {
             this.context = context;
             inflater = LayoutInflater.from(context);
-
-            HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComment = new HashMap<Pair<Integer, Boolean>, List<Comment>>();
-            for (Comment comment : comments) {
-                Pair<Integer, Boolean> key = new Pair<Integer, Boolean>(comment.line(), comment.left());
-                if (!lineToComment.containsKey(key)) {
-                    lineToComment.put(key, new ArrayList<Comment>());
-                }
-                lineToComment.get(key).add(comment);
-            }
+            this.diffs = diffs;
             linesWithComments = new ArrayList<Object>(diffs.size() + comments.size());
-            for (FileDiff.DiffLine diffLine : diffs) {
-                linesWithComments.add(diffLine);
-                switch (diffLine.type()) {
-                    case MARKER:
-                        break;
-                    case BOTH_SIDE:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
-                        break;
-                    case RIGHT:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
-                        break;
-                    case LEFT:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
-                        break;
-                }
-            }
+            resetComments(comments);
         }
 
-        private static void addAll(List<Object> main, List<Comment> add) {
+        private void addAll(List<Object> main, List<Comment> add) {
             if (add != null) {
                 main.addAll(add);
             }
@@ -143,6 +175,9 @@ public class DiffFragment extends ListFragment implements LoaderManager.LoaderCa
             ViewUtils.setText(convertView, R.id.author, comment.author());
             ViewUtils.setText(convertView, R.id.comment_text, comment.text());
             ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, comment.date()));
+            View viewById = convertView.findViewById(R.id.reply);
+            viewById.setOnClickListener(this);
+            viewById.setTag(comment);
             return convertView;
         }
 
@@ -170,12 +205,145 @@ public class DiffFragment extends ListFragment implements LoaderManager.LoaderCa
             return convertView;
         }
 
+        @Override
+        public void onClick(View v) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle(R.string.new_comment);
+            EditText editText = new EditText(context);
+            builder.setView(editText);
+            builder.setNegativeButton(android.R.string.cancel, null);
+            Comment comment = (Comment) v.getTag();
+            builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(comment.line(), comment.left(), editText));
+            builder.create().show();
+        }
+
+        void resetComments(List<Comment> comments) {
+            HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComment = new HashMap<Pair<Integer, Boolean>, List<Comment>>();
+            for (Comment comment : comments) {
+                Pair<Integer, Boolean> key = new Pair<Integer, Boolean>(comment.line(), comment.left());
+                if (!lineToComment.containsKey(key)) {
+                    lineToComment.put(key, new ArrayList<Comment>());
+                }
+                lineToComment.get(key).add(comment);
+            }
+            linesWithComments.clear();
+
+            for (FileDiff.DiffLine diffLine : diffs) {
+                linesWithComments.add(diffLine);
+                switch (diffLine.type()) {
+                    case MARKER:
+                        break;
+                    case BOTH_SIDE:
+                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
+                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
+                        break;
+                    case RIGHT:
+                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
+                        break;
+                    case LEFT:
+                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
+                        break;
+                }
+            }
+
+            notifyDataSetChanged();
+        }
+
+    }
+
+    private class InlineDraftDialogListener implements DialogInterface.OnClickListener {
+
+        private final int line;
+        private final boolean left;
+        private final EditText text;
+
+        private InlineDraftDialogListener(int line, boolean left, EditText text) {
+            this.line = line;
+            this.left = left;
+            this.text = text;
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            ServerCaller.from(getActivity()).getAccountName();
+            Comment comment = new Comment(true, text.getText().toString(), ServerCaller.from(getActivity()).getAccountName(), line, left, new Date());
+            Bundle arg = new Bundle();
+            arg.putParcelable(KEY_COMMENT, comment);
+            getLoaderManager().restartLoader(INLINE_DRAFT_LOADER_ID, arg, DiffFragment.this.inlineDraftCallback);
+        }
     }
 
     private int issueId;
     private int patchSetId;
     private int patchId;
     private ArrayList<Comment> comments;
+    private DiffAdapter diffAdapter;
+
+    private LoaderManager.LoaderCallbacks<FileDiff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<FileDiff>() {
+
+        @Override
+        public Loader<FileDiff> onCreateLoader(int id, Bundle args) {
+            return new DiffLoader(getActivity(), issueId, patchSetId, patchId);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<FileDiff> loader, FileDiff data) {
+            if (data == null) {
+                return;
+            }
+            diffAdapter = new DiffAdapter(getActivity(), data.content(), comments);
+            setListAdapter(diffAdapter);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<FileDiff> loader) {
+        }
+
+    };
+
+    private LoaderManager.LoaderCallbacks<Void> inlineDraftCallback = new LoaderManager.LoaderCallbacks<Void>() {
+
+        @Override
+        public Loader<Void> onCreateLoader(int id, Bundle args) {
+            return new InlineDraftLoader(getActivity(), issueId, patchSetId, patchId, (Comment) args.getParcelable(KEY_COMMENT));
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Void> loader, Void data) {
+            getLoaderManager().restartLoader(PATCH_SET_LOADER_ID, new Bundle(), DiffFragment.this.patchSetLoaderCallback);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Void> loader) {
+
+        }
+    };
+
+    private LoaderManager.LoaderCallbacks<PatchSet> patchSetLoaderCallback = new LoaderManager.LoaderCallbacks<PatchSet>() {
+        @Override
+        public Loader<PatchSet> onCreateLoader(int id, Bundle args) {
+            return new PatchSetLoader(getActivity(), issueId, patchSetId);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<PatchSet> loader, PatchSet data) {
+            if (data == null) {
+                return;
+            }
+
+            for (PatchSetFile file: data.files()) {
+                if (file.id() == patchId) {
+                    diffAdapter.resetComments(file.comments());
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<PatchSet> loader) {
+
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -184,25 +352,8 @@ public class DiffFragment extends ListFragment implements LoaderManager.LoaderCa
         issueId = intent.getIntExtra(ISSUE_ID_EXTRA, -1);
         patchSetId = intent.getIntExtra(PATCH_SET_ID_EXTRA, -1);
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
-        getLoaderManager().initLoader(0, new Bundle(), this);
+        getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
         return super.onCreateView(inflater, container, savedInstanceState);
-    }
-
-    @Override
-    public Loader<FileDiff> onCreateLoader(int id, Bundle args) {
-        return new DiffLoader(getActivity(), issueId, patchSetId, patchId);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<FileDiff> loader, FileDiff data) {
-        if (data == null) {
-            return;
-        }
-        setListAdapter(new DiffAdapter(getActivity(), data.content(), comments));
-    }
-
-    @Override
-    public void onLoaderReset(Loader<FileDiff> loader) {
     }
 
 }

@@ -7,16 +7,18 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
+import com.chrome.codereview.CodereviewApplication;
+import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.FileDiff;
+import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PublishData;
 import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.chrome.codereview.CodereviewApplication;
-import com.chrome.codereview.model.Issue;
+import com.loopj.android.http.PersistentCookieStore;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -31,7 +33,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -41,6 +42,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,6 @@ public class ServerCaller {
     }
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
-    private static final String COOKIE_PREFERENCE = "ServerCaller_COOKIE_PREFERENCE";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
     private static final String XSRF_TOKEN_TIME_PREFERENCE = "ServerCaller_XSRF_TOKEN_TIME_PREFERENCE";
     private static final int TOKEN_LIFE_TIME = 25;//min
@@ -68,6 +69,7 @@ public class ServerCaller {
     private static final Uri XSRF_URL = BASE_URL.buildUpon().appendPath("xsrf_token").build();
     private static final Uri AUTH_COOKIE_URL = BASE_URL.buildUpon().appendEncodedPath("_ah/login").appendQueryParameter("continue", "nowhere").build();
     private static final Uri ISSUE_API_URL = BASE_URL.buildUpon().appendPath("api").build();
+    private static final Uri INLINE_DRAFT = BASE_URL.buildUpon().appendPath("inline_draft").build();
     private static final String PUBLISH = "publish";
     private static final String ISSUE_PATH = "issue";
     private static final Uri DOWNLOAD_DIFF = BASE_URL.buildUpon().appendPath("download").build();
@@ -80,6 +82,7 @@ public class ServerCaller {
     public ServerCaller(Context context) {
         this.context = context;
         httpClient = new DefaultHttpClient();
+        httpClient.setCookieStore(new PersistentCookieStore(context));
         reset();
     }
 
@@ -87,21 +90,16 @@ public class ServerCaller {
         initChromiumAccount();
         if (chromiumAccount == null) {
             state = State.NEEDS_ACCOUNT;
-            clearCookieAndToken();
+            clearToken();
             return;
         }
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String cookie = sharedPreferences.getString(COOKIE_PREFERENCE, null);
-
-        if (cookie == null) {
+        if (hasValidAuthCookie()) {
+            state = State.OK;
+        } else {
             state = State.NEEDS_AUTHORIZATION;
-            clearCookieAndToken();
-            return;
+            clearToken();
         }
-
-        httpClient.getCookieStore().addCookie(new BasicClientCookie(AUTH_COOKIE_NAME, cookie));
-        state = State.OK;
     }
 
     public static ServerCaller from(Context context) {
@@ -131,7 +129,7 @@ public class ServerCaller {
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {
         String token = GoogleAuthUtil.getToken(this.context, chromiumAccount.name, TOKEN_TYPE);
-        loadAndSaveCookie(token);
+        loadCookie(token);
         loadAndSaveXSRFToken();
     }
 
@@ -191,7 +189,17 @@ public class ServerCaller {
         return preferences.getString(XSRF_TOKEN_PREFERENCE, "");
     }
 
-    private void loadAndSaveCookie(String authToken) throws AuthenticationException, IOException {
+    private boolean hasValidAuthCookie() {
+        for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
+            if (cookie.getName().equals(AUTH_COOKIE_NAME) && !cookie.isExpired(new Date())) {
+                state = State.OK;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void loadCookie(String authToken) throws AuthenticationException, IOException {
         String url = AUTH_COOKIE_URL.buildUpon().appendQueryParameter("auth", authToken).build().toString();
         HttpGet method = new HttpGet(url);
         httpClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
@@ -204,17 +212,11 @@ public class ServerCaller {
             throw new AuthenticationException("Failed to get cookie");
         }
 
-        for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
-            if (AUTH_COOKIE_NAME.equals(cookie.getName())) {
-                save(COOKIE_PREFERENCE, cookie.getValue());
-                return;
-            }
-        }
-
-        throw new AuthenticationException("Failed to get cookie");
+        if (!hasValidAuthCookie())
+            throw new AuthenticationException("Failed to get cookie");
     }
 
-    private PatchSet loadPatchSet(int issueId, int patchSetId) {
+    public PatchSet loadPatchSet(int issueId, int patchSetId) {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendPath(patchSetId + "").appendQueryParameter("comments", "true").build();
         try {
             return PatchSet.from(patchSetId, executeGetJSONRequest(uri));
@@ -254,6 +256,26 @@ public class ServerCaller {
         return Collections.emptyList();
     }
 
+    public void inlineDraft(int issueId, int patchSetId, int patchId, Comment comment) throws IOException {
+        HttpPost post = new HttpPost(INLINE_DRAFT.toString());
+        ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        nameValuePairs.add(new BasicNameValuePair("side", comment.left() ? "a" : "b"));
+        nameValuePairs.add(new BasicNameValuePair("snapshot", comment.left() ? "old" : "new"));
+        nameValuePairs.add(new BasicNameValuePair("lineno", comment.line() + ""));
+        nameValuePairs.add(new BasicNameValuePair("issue", issueId + ""));
+        nameValuePairs.add(new BasicNameValuePair("patchset", patchSetId + ""));
+        nameValuePairs.add(new BasicNameValuePair("patch", patchId + ""));
+        nameValuePairs.add(new BasicNameValuePair("text", comment.text()));
+
+        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(nameValuePairs);
+        post.setEntity(formEntity);
+        HttpResponse response = httpClient.execute(post);
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            entity.consumeContent();
+        }
+    }
+
     private String executeRequest(HttpUriRequest request) throws IOException {
         HttpResponse response = httpClient.execute(request);
         String entity = EntityUtils.toString(response.getEntity());
@@ -274,9 +296,9 @@ public class ServerCaller {
         preferences.edit().putLong(name, value).apply();
     }
 
-    private void clearCookieAndToken() {
+    private void clearToken() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        preferences.edit().remove(COOKIE_PREFERENCE).remove(XSRF_TOKEN_PREFERENCE).apply();
+        preferences.edit().remove(XSRF_TOKEN_PREFERENCE).apply();
     }
 
 }
