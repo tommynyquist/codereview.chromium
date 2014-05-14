@@ -15,19 +15,18 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
-import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.ViewUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -181,10 +180,20 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
             }
             ViewUtils.setText(convertView, R.id.comment_text, comment.text());
             ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, comment.date()));
-            View viewById = convertView.findViewById(R.id.reply);
-            viewById.setOnClickListener(this);
-            viewById.setTag(comment);
+            initImageButton(convertView, R.id.img1, R.drawable.ic_action_reply, R.drawable.ic_action_edit, comment);
+            initImageButton(convertView, R.id.img2, R.drawable.ic_action_accept, R.drawable.ic_action_remove, comment);
             return convertView;
+        }
+
+        private void initImageButton(View convertView, int buttonRes, int mainDrawableRes, int draftDrawableRes, Comment comment) {
+            ImageButton image = (ImageButton) convertView.findViewById(buttonRes);
+            if (comment.isDraft()) {
+                image.setImageResource(draftDrawableRes);
+            } else {
+                image.setImageResource(mainDrawableRes);
+            }
+            image.setOnClickListener(this);
+            image.setTag(comment);
         }
 
         public View getDiffLineView(FileDiff.DiffLine line, View convertView, ViewGroup parent) {
@@ -214,7 +223,16 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
         @Override
         public void onClick(View v) {
             Comment comment = (Comment) v.getTag();
-            showWriteCommentDialog(comment.line(), comment.left());
+            if (v.getId() == R.id.img2) {
+                String text = comment.isDraft() ? "" : Comment.quote(comment) + "\nDone.";
+                String messageId = comment.isDraft() ? comment.messageId() : "";
+                restartInlineDraftLoader(Comment.createDraft(text, comment.line(), comment.left(), messageId));
+                return;
+            }
+
+            String messageId = comment.isDraft() ? comment.messageId() : "";
+            String text = comment.isDraft() ? comment.text() : Comment.quote(comment);
+            showWriteCommentDialog(text, messageId, comment.line(), comment.left());
         }
 
         void resetComments(List<Comment> comments) {
@@ -256,21 +274,26 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
         private final int line;
         private final boolean left;
         private final EditText text;
+        private final String messageId;
 
-        private InlineDraftDialogListener(int line, boolean left, EditText text) {
+        private InlineDraftDialogListener(EditText text, String messageId, int line, boolean left) {
             this.line = line;
             this.left = left;
             this.text = text;
+            this.messageId = messageId;
         }
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            ServerCaller.from(getActivity()).getAccountName();
-            Comment comment = new Comment(true, text.getText().toString(), ServerCaller.from(getActivity()).getAccountName(), line, left, new Date());
-            Bundle arg = new Bundle();
-            arg.putParcelable(KEY_COMMENT, comment);
-            getLoaderManager().restartLoader(INLINE_DRAFT_LOADER_ID, arg, DiffFragment.this.inlineDraftCallback);
+            Comment comment =  Comment.createDraft(text.getText().toString(), line, left, messageId);
+            restartInlineDraftLoader(comment);
         }
+    }
+
+    private void restartInlineDraftLoader(Comment comment) {
+        Bundle arg = new Bundle();
+        arg.putParcelable(KEY_COMMENT, comment);
+        getLoaderManager().restartLoader(INLINE_DRAFT_LOADER_ID, arg, this.inlineDraftCallback);
     }
 
     private int issueId;
@@ -369,16 +392,17 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
             return;
         }
         int line = diffLine.type() == FileDiff.LineType.LEFT ? diffLine.leftLineNumber() : diffLine.rightLineNumber();
-        showWriteCommentDialog(line, diffLine.type() == FileDiff.LineType.LEFT);
+        showWriteCommentDialog("", "", line, diffLine.type() == FileDiff.LineType.LEFT);
     }
 
-    private void showWriteCommentDialog(int line, boolean left) {
+    private void showWriteCommentDialog(String text, String messageId, int line, boolean left) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.new_comment);
         EditText editText = new EditText(getActivity());
+        editText.setText(text);
         builder.setView(editText);
         builder.setNegativeButton(android.R.string.cancel, null);
-        builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(line, left, editText));
+        builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(editText, messageId, line, left));
         builder.create().show();
     }
 

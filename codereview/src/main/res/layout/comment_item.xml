@@ -26,7 +26,7 @@
             android:textColor="@android:color/tertiary_text_light"/>
 
         <ImageButton
-            android:id="@+id/done"
+            android:id="@+id/img2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
@@ -34,10 +34,10 @@
             android:src="@drawable/ic_action_accept"/>
 
         <ImageButton
-            android:id="@+id/reply"
+            android:id="@+id/img1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toLeftOf="@+id/done"
+            android:layout_toLeftOf="@+id/img2"
             android:paddingRight="10dp"
             android:background="@android:color/white"
             android:src="@drawable/ic_action_reply"/>

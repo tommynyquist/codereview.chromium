@@ -222,6 +222,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     private void startDiffActivity(int patchSetId, PatchSetFile file) {
         Intent intent = new Intent(getActivity(), DiffActivity.class);
+        intent.putExtra(DiffActivity.PATH_EXTRA, file.path());
         intent.putExtra(DiffFragment.ISSUE_ID_EXTRA, issueId);
         intent.putExtra(DiffFragment.PATCH_SET_ID_EXTRA, patchSetId);
         intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());

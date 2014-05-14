@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 
 import com.chrome.codereview.CodereviewApplication;
 import com.chrome.codereview.model.Comment;
@@ -266,7 +267,9 @@ public class ServerCaller {
         nameValuePairs.add(new BasicNameValuePair("patchset", patchSetId + ""));
         nameValuePairs.add(new BasicNameValuePair("patch", patchId + ""));
         nameValuePairs.add(new BasicNameValuePair("text", comment.text()));
-
+        if (!TextUtils.isEmpty(comment.messageId())) {
+            nameValuePairs.add(new BasicNameValuePair("message_id", comment.messageId()));
+        }
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(nameValuePairs);
         post.setEntity(formEntity);
         HttpResponse response = httpClient.execute(post);
