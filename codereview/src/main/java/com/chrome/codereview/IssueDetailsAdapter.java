@@ -230,7 +230,9 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         if (count2 == 0) {
             return builder;
         }
-        builder.append(separator);
+        if (count1 != 0) {
+            builder.append(separator);
+        }
         builder.append(context.getString(res2, count2));
 
         if (what2 != null) {
