@@ -70,7 +70,7 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         }
         String patchSetText = context.getString(R.string.patchset, position) + patchSet.message();
         ViewUtils.setText(convertView, R.id.patchset_message, patchSetText);
-        fillStatsView(convertView, patchSet.linesAdded(), patchSet.linesRemoved(), patchSet.numComments());
+        fillStatsView(convertView, patchSet.linesAdded(), patchSet.linesRemoved(), patchSet.numComments(), patchSet.numDrafts());
         convertView.findViewById(R.id.list_divider).setVisibility(!isExpanded && position == issue.patchSets().size() ? View.INVISIBLE : View.VISIBLE);
         return convertView;
     }
@@ -160,9 +160,9 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
             return result;
         }
         if (isExpanded) {
-            imageView.getDrawable().setState(new int[] {android.R.attr.state_expanded});
+            imageView.getDrawable().setState(new int[]{android.R.attr.state_expanded});
         } else {
-            imageView.getDrawable().setState(new int[] {});
+            imageView.getDrawable().setState(new int[]{});
         }
 
         return result;
@@ -179,7 +179,7 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         }
         ViewUtils.setText(convertView, R.id.file_name, patchSetFile.path());
         fillFileStatusView((TextView) convertView.findViewById(R.id.file_status), patchSetFile.status());
-        fillStatsView(convertView, patchSetFile.numAdded(), patchSetFile.numRemoved(), patchSetFile.numberOfComments());
+        fillStatsView(convertView, patchSetFile.numAdded(), patchSetFile.numRemoved(), patchSetFile.numberOfComments(), patchSetFile.numberOfDrafts());
         return convertView;
     }
 
@@ -205,21 +205,39 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         view.setText(text);
     }
 
-    public void fillStatsView(View convertView, int numAdded, int numRemoved, int numComments) {
+    public void fillStatsView(View convertView, int numAdded, int numRemoved, int numComments, int numDrafts) {
         ForegroundColorSpan greenSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_green_dark));
         ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_red_dark));
-        SpannableStringBuilder builder = new SpannableStringBuilder();
-        CharSequence linesAdded = context.getString(R.string.lines_added, numAdded);
-        CharSequence linesRemoved = context.getString(R.string.lines_removed, numRemoved);
-        builder.append(linesAdded);
-        builder.setSpan(greenSpan, 0, linesAdded.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-        builder.append(", ");
-        builder.append(linesRemoved);
-        builder.setSpan(redSpan, linesAdded.length() + 2, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-        ViewUtils.setText(convertView, R.id.diff_stats, builder);
-        ViewUtils.setText(convertView, R.id.comments_number, context.getString(R.string.comments_number, numComments));
+        SpannableStringBuilder linesStats = createSpannedString(greenSpan, R.string.lines_added, numAdded, redSpan, R.string.lines_removed, numRemoved, ", ");
+        ViewUtils.setText(convertView, R.id.diff_stats, linesStats);
+
+        boolean showCommentsView = numDrafts != 0 || numComments != 0;
+        convertView.findViewById(R.id.comments_number).setVisibility(showCommentsView ? View.VISIBLE : View.INVISIBLE);
+        SpannableStringBuilder commentsStats = createSpannedString(null, R.string.comments_number, numComments, null, R.string.drafts_number, numDrafts, ", ");
+        ViewUtils.setText(convertView, R.id.comments_number, commentsStats);
     }
 
+    private SpannableStringBuilder createSpannedString(Object what1, int res1, int count1, Object what2, int res2, int count2, CharSequence separator) {
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        String text1 = context.getString(res1, count1);
+        if (count1 != 0) {
+            builder.append(text1);
+        }
+        if (what1 != null) {
+            builder.setSpan(what1, 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+
+        if (count2 == 0) {
+            return builder;
+        }
+        builder.append(separator);
+        builder.append(context.getString(res2, count2));
+
+        if (what2 != null) {
+            builder.setSpan(what2, text1.length() + separator.length(), builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+        return builder;
+    }
 
     @Override
     public boolean isChildSelectable(int groupPosition, int childPosition) {

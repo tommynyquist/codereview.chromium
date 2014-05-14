@@ -12,6 +12,7 @@ import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 
@@ -33,8 +34,9 @@ import java.util.List;
 /**
  * Created by sergeyv on 29/4/14.
  */
-public class DiffFragment extends ListFragment {
+public class DiffFragment extends ListFragment implements AdapterView.OnItemClickListener {
 
+    public static final int RESULT_REFRESH = 10;
     public static final String COMMENTS_EXTRA = "COMMENTS_EXTRA";
     public static final String ISSUE_ID_EXTRA = "ISSUE_ID_EXTRA";
     public static final String PATCH_SET_ID_EXTRA = "PATCH_SET_ID_EXTRA";
@@ -172,7 +174,11 @@ public class DiffFragment extends ListFragment {
             if (convertView == null) {
                 convertView = inflater.inflate(R.layout.comment_item, parent, false);
             }
-            ViewUtils.setText(convertView, R.id.author, comment.author());
+            if (comment.isDraft()) {
+                ViewUtils.setText(convertView, R.id.author, context.getString(R.string.draft_author));
+            } else {
+                ViewUtils.setText(convertView, R.id.author, comment.author());
+            }
             ViewUtils.setText(convertView, R.id.comment_text, comment.text());
             ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, comment.date()));
             View viewById = convertView.findViewById(R.id.reply);
@@ -207,14 +213,8 @@ public class DiffFragment extends ListFragment {
 
         @Override
         public void onClick(View v) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle(R.string.new_comment);
-            EditText editText = new EditText(context);
-            builder.setView(editText);
-            builder.setNegativeButton(android.R.string.cancel, null);
             Comment comment = (Comment) v.getTag();
-            builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(comment.line(), comment.left(), editText));
-            builder.create().show();
+            showWriteCommentDialog(comment.line(), comment.left());
         }
 
         void resetComments(List<Comment> comments) {
@@ -293,6 +293,7 @@ public class DiffFragment extends ListFragment {
             }
             diffAdapter = new DiffAdapter(getActivity(), data.content(), comments);
             setListAdapter(diffAdapter);
+            getListView().setOnItemClickListener(DiffFragment.this);
         }
 
         @Override
@@ -311,6 +312,7 @@ public class DiffFragment extends ListFragment {
         @Override
         public void onLoadFinished(Loader<Void> loader, Void data) {
             getLoaderManager().restartLoader(PATCH_SET_LOADER_ID, new Bundle(), DiffFragment.this.patchSetLoaderCallback);
+            getActivity().setResult(RESULT_REFRESH);
         }
 
         @Override
@@ -331,7 +333,7 @@ public class DiffFragment extends ListFragment {
                 return;
             }
 
-            for (PatchSetFile file: data.files()) {
+            for (PatchSetFile file : data.files()) {
                 if (file.id() == patchId) {
                     diffAdapter.resetComments(file.comments());
                     return;
@@ -354,6 +356,30 @@ public class DiffFragment extends ListFragment {
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
         return super.onCreateView(inflater, container, savedInstanceState);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if (diffAdapter.getItemViewType(position) != DiffAdapter.LINE_TYPE) {
+            return;
+        }
+
+        FileDiff.DiffLine diffLine = (FileDiff.DiffLine) diffAdapter.getItem(position);
+        if (diffLine.type() == FileDiff.LineType.MARKER) {
+            return;
+        }
+        int line = diffLine.type() == FileDiff.LineType.LEFT ? diffLine.leftLineNumber() : diffLine.rightLineNumber();
+        showWriteCommentDialog(line, diffLine.type() == FileDiff.LineType.LEFT);
+    }
+
+    private void showWriteCommentDialog(int line, boolean left) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.new_comment);
+        EditText editText = new EditText(getActivity());
+        builder.setView(editText);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(line, left, editText));
+        builder.create().show();
     }
 
 }

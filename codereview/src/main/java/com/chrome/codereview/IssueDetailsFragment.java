@@ -46,6 +46,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
+    private static final int REQUEST_CODE_DIFF = 1;
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -211,12 +212,20 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == DiffFragment.RESULT_REFRESH) {
+            getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
+        }
+    }
+
     private void startDiffActivity(int patchSetId, PatchSetFile file) {
         Intent intent = new Intent(getActivity(), DiffActivity.class);
         intent.putExtra(DiffFragment.ISSUE_ID_EXTRA, issueId);
         intent.putExtra(DiffFragment.PATCH_SET_ID_EXTRA, patchSetId);
         intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());
         intent.putParcelableArrayListExtra(DiffFragment.COMMENTS_EXTRA, new ArrayList<Parcelable>(file.comments()));
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_DIFF);
     }
 }

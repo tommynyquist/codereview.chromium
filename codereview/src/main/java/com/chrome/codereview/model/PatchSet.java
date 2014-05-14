@@ -66,6 +66,14 @@ public class PatchSet {
         return numComments;
     }
 
+    public int numDrafts() {
+        int drafts = 0;
+        for (PatchSetFile file: files()) {
+            drafts += file.numberOfDrafts();
+        }
+        return drafts;
+    }
+
     public int id() {
         return patchSetId;
     }
