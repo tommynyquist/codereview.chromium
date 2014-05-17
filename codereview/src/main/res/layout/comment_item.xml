@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:background="@android:color/white"
+            android:background="@drawable/image_button_bg"
             android:src="@drawable/ic_action_accept"/>
 
         <ImageButton
@@ -38,8 +38,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toLeftOf="@+id/img2"
-            android:paddingRight="10dp"
-            android:background="@android:color/white"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/image_button_bg"
             android:src="@drawable/ic_action_reply"/>
 
     </RelativeLayout>

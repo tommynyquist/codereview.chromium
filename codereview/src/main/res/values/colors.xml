@@ -8,4 +8,5 @@
     <color name="diff_add_text">#528E4C</color>
     <color name="diff_remove">#FFDDDD</color>
     <color name="diff_remove_text">#932121</color>
+    <color name="holo_gray_bright">#33999999</color>
 </resources>
