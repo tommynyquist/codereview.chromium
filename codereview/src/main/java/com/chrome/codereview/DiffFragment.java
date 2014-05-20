@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
@@ -301,6 +302,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
     private int patchId;
     private ArrayList<Comment> comments;
     private DiffAdapter diffAdapter;
+    private ProgressBar progressBar;
 
     private LoaderManager.LoaderCallbacks<FileDiff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<FileDiff>() {
 
@@ -329,6 +331,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public Loader<Void> onCreateLoader(int id, Bundle args) {
+            progressBar.setVisibility(View.VISIBLE);
             return new InlineDraftLoader(getActivity(), issueId, patchSetId, patchId, (Comment) args.getParcelable(KEY_COMMENT));
         }
 
@@ -352,6 +355,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public void onLoadFinished(Loader<PatchSet> loader, PatchSet data) {
+            progressBar.setVisibility(View.GONE);
             if (data == null) {
                 return;
             }
@@ -378,7 +382,9 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
         patchSetId = intent.getIntExtra(PATCH_SET_ID_EXTRA, -1);
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
-        return super.onCreateView(inflater, container, savedInstanceState);
+        View view = inflater.inflate(R.layout.diff_fragment, container, false);
+        progressBar = (ProgressBar) view.findViewById(android.R.id.progress);
+        return view;
     }
 
     @Override

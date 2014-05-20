@@ -1,5 +1,8 @@
 package com.chrome.codereview.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 
@@ -9,7 +12,25 @@ import java.util.List;
 /**
  * Created by sergeyv on 27/4/14.
  */
-public class PublishData {
+public class PublishData implements Parcelable {
+
+    public static final Parcelable.Creator<PublishData> CREATOR = new Parcelable.Creator<PublishData>() {
+        @Override
+        public PublishData createFromParcel(Parcel source) {
+            String message = source.readString();
+            int id = source.readInt();
+            String subject = source.readString();
+            String cc = source.readString();
+            String reviewers = source.readString();
+
+            return new PublishData(id, message, subject, cc, reviewers);
+        }
+
+        @Override
+        public PublishData[] newArray(int size) {
+            return new PublishData[size];
+        }
+    };
 
     private String message;
     private final int id;
@@ -53,4 +74,17 @@ public class PublishData {
         return nameValuePairs;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(message);
+        dest.writeInt(id);
+        dest.writeString(subject);
+        dest.writeString(cc);
+        dest.writeString(reviewers);
+    }
 }

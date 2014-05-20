@@ -39,6 +39,12 @@ public abstract class CachedLoader<T> extends AsyncTaskLoader<T> {
     }
 
     @Override
+    public void onCanceled(T data) {
+        result = data;
+        super.onCanceled(data);
+    }
+
+    @Override
     protected void onStopLoading() {
         cancelLoad();
     }

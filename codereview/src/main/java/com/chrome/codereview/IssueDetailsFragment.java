@@ -47,6 +47,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
     private static final int REQUEST_CODE_DIFF = 1;
+    private static final String PUBLISH_DATA_ARG = "publishData";
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -63,7 +64,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
     }
 
-    private static class PublishLoaded extends CachedLoader<Void> {
+    private static class PublishLoaded extends CachedLoader<Boolean> {
 
         private PublishData publishData;
 
@@ -73,8 +74,9 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
 
         @Override
-        public Void loadInBackground() {
+        public Boolean loadInBackground() {
             try {
+                System.out.println("doInBackground");
                 serverCaller().publish(publishData);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -83,7 +85,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
             } catch (AuthenticationException e) {
                 e.printStackTrace();
             }
-            return null;
+            return true;
         }
     }
 
@@ -107,28 +109,26 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
     };
 
-    private LoaderManager.LoaderCallbacks<Void> publishLoaderCallback = new LoaderManager.LoaderCallbacks<Void>() {
+    private LoaderManager.LoaderCallbacks<Boolean> publishLoaderCallback = new LoaderManager.LoaderCallbacks<Boolean>() {
 
         @Override
-        public Loader<Void> onCreateLoader(int id, Bundle args) {
-            return new PublishLoaded(getActivity(), lastPublishData);
+        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            return new PublishLoaded(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
         }
 
         @Override
-        public void onLoadFinished(Loader<Void> loader, Void v) {
-            lastPublishData = null;
+        public void onLoadFinished(Loader<Boolean> loader, Boolean v) {
             publishProgressDialog.dismiss();
             getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
         }
 
         @Override
-        public void onLoaderReset(Loader<Void> loader) {
+        public void onLoaderReset(Loader<Boolean> loader) {
         }
     };
 
     private int issueId;
     private Issue issue;
-    private PublishData lastPublishData;
     private AlertDialog publishDialog;
     private ProgressDialog publishProgressDialog;
     private IssueDetailsAdapter issueDetailsAdapter;
@@ -164,12 +164,14 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         String subject = getTextFromPublishDialog(R.id.publish_subject);
         String cc = getTextFromPublishDialog(R.id.publish_cc);
         String reviewers = getTextFromPublishDialog(R.id.publish_reviewers);
-        lastPublishData = new PublishData(issueId, message, subject, cc, reviewers);
+        PublishData publishData = new PublishData(issueId, message, subject, cc, reviewers);
         publishProgressDialog = new ProgressDialog(getActivity());
         publishProgressDialog.setIndeterminate(true);
         publishProgressDialog.setMessage(getActivity().getString(R.string.publish_progress_message));
         publishProgressDialog.show();
-        getLoaderManager().restartLoader(PUBLISH_LOADER_ID, null, this.publishLoaderCallback);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(PUBLISH_DATA_ARG, publishData);
+        getLoaderManager().restartLoader(PUBLISH_LOADER_ID, bundle, this.publishLoaderCallback);
     }
 
     @Override
