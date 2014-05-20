@@ -47,6 +47,7 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
     @Override
     public void onLoadFinished(Loader<UserIssues> listLoader, UserIssues issues) {
         issuesAdapter.setUserIssues(issues);
+        setListAdapter(issuesAdapter);
     }
 
     @Override
@@ -57,7 +58,6 @@ public class IssuesListFragment extends ListFragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         issuesAdapter = new UserIssuesAdapter(getActivity());
-        setListAdapter(issuesAdapter);
         getLoaderManager().initLoader(0, new Bundle(), this);
         View view = super.onCreateView(inflater, container, savedInstanceState);
         ListView listView = (ListView) view.findViewById(android.R.id.list);

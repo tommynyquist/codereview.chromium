@@ -302,7 +302,6 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
     private int patchId;
     private ArrayList<Comment> comments;
     private DiffAdapter diffAdapter;
-    private ProgressBar progressBar;
 
     private LoaderManager.LoaderCallbacks<FileDiff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<FileDiff>() {
 
@@ -331,7 +330,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public Loader<Void> onCreateLoader(int id, Bundle args) {
-            progressBar.setVisibility(View.VISIBLE);
+            getActivity().setProgressBarVisibility(true);
             return new InlineDraftLoader(getActivity(), issueId, patchSetId, patchId, (Comment) args.getParcelable(KEY_COMMENT));
         }
 
@@ -355,7 +354,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public void onLoadFinished(Loader<PatchSet> loader, PatchSet data) {
-            progressBar.setVisibility(View.GONE);
+            getActivity().setProgressBarVisibility(false);
             if (data == null) {
                 return;
             }
@@ -376,6 +375,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setProgressBarIndeterminate(true);
         Intent intent = getActivity().getIntent();
         comments = intent.getParcelableArrayListExtra(COMMENTS_EXTRA);
         issueId = intent.getIntExtra(ISSUE_ID_EXTRA, -1);
@@ -383,7 +383,6 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
         View view = inflater.inflate(R.layout.diff_fragment, container, false);
-        progressBar = (ProgressBar) view.findViewById(android.R.id.progress);
         return view;
     }
 

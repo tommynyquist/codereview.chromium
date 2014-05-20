@@ -93,6 +93,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
         @Override
         public Loader<Issue> onCreateLoader(int id, Bundle args) {
+            getActivity().setProgressBarVisibility(true);
             return new IssueLoader(getActivity(), issueId);
         }
 
@@ -100,6 +101,8 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
             IssueDetailsFragment.this.issue = issue;
             issueDetailsAdapter.setIssue(issue);
+            getActivity().getActionBar().setTitle(issue.subject());
+            getActivity().setProgressBarVisibility(false);
         }
 
         @Override
@@ -113,12 +116,12 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            getActivity().setProgressBarVisibility(true);
             return new PublishLoaded(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
         }
 
         @Override
         public void onLoadFinished(Loader<Boolean> loader, Boolean v) {
-            publishProgressDialog.dismiss();
             getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
         }
 
@@ -130,22 +133,23 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private int issueId;
     private Issue issue;
     private AlertDialog publishDialog;
-    private ProgressDialog publishProgressDialog;
     private IssueDetailsAdapter issueDetailsAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setProgressBarIndeterminate(true);
         setHasOptionsMenu(true);
         issueId = getActivity().getIntent().getIntExtra(EXTRA_ISSUE_ID, -1);
         if (issueId == -1) {
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
+        getActivity().getActionBar().setTitle(getString(R.string.issue) + " " +issueId);
         issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
-        getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
         View view = inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
         listView.setAdapter(issueDetailsAdapter);
+        getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
         return view;
     }
 
@@ -165,10 +169,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         String cc = getTextFromPublishDialog(R.id.publish_cc);
         String reviewers = getTextFromPublishDialog(R.id.publish_reviewers);
         PublishData publishData = new PublishData(issueId, message, subject, cc, reviewers);
-        publishProgressDialog = new ProgressDialog(getActivity());
-        publishProgressDialog.setIndeterminate(true);
-        publishProgressDialog.setMessage(getActivity().getString(R.string.publish_progress_message));
-        publishProgressDialog.show();
         Bundle bundle = new Bundle();
         bundle.putParcelable(PUBLISH_DATA_ARG, publishData);
         getLoaderManager().restartLoader(PUBLISH_LOADER_ID, bundle, this.publishLoaderCallback);
