@@ -3,11 +3,13 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <item name="android:actionBarStyle">@style/ProgressBarActionBar</item>
+
     </style>
 
     <style name="ProgressBarActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
         <item name="android:progressBarPadding">0dip</item>
-     </style>
+        <item name="android:background">#324359</item>
+    </style>
 
     <style name="CodeText">
         <item name="android:textSize">12sp</item>

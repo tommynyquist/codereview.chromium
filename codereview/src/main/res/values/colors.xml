@@ -9,4 +9,13 @@
     <color name="diff_remove">#FFDDDD</color>
     <color name="diff_remove_text">#932121</color>
     <color name="holo_gray_bright">#33999999</color>
+
+    <color name="scheme_green">#33A830</color>
+    <color name="scheme_red">#FF4444</color>
+    <color name="scheme_blue">#5E97F5</color>
+
+    <color name="group_text_color">#707070</color>
+
+
+
 </resources>

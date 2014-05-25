@@ -115,7 +115,8 @@ public class ServerCaller {
         if (chromiumAccount == null) {
             return null;
         }
-        return chromiumAccount.name;
+        return "pfeldman@chromium.org";
+//        return chromiumAccount.name;
     }
 
     public UserIssues loadIssuesForUser(String accountName) {

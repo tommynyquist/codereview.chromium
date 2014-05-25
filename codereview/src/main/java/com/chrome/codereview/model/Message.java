@@ -2,6 +2,7 @@ package com.chrome.codereview.model;
 
 import android.content.Context;
 
+import com.chrome.codereview.R;
 import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.EmailUtils;
 
@@ -20,19 +21,19 @@ import java.util.List;
 public class Message {
 
     public enum Decoration {
-        LGTM(android.R.color.holo_green_dark) {
+        LGTM(R.color.scheme_green) {
             @Override
             public boolean appliesTo(Message message) {
                 return message.approval;
             }
         },
-        NOT_LGTM(android.R.color.holo_red_dark) {
+        NOT_LGTM(R.color.scheme_red) {
             @Override
             public boolean appliesTo(Message message) {
                 return message.disapproval;
             }
         },
-        COMMITTED(android.R.color.holo_blue_dark) {
+        COMMITTED(R.color.scheme_blue) {
 
             private static final String COMMIT_BY_BOT = "Change committed as ";
             private static final String COMMIT_MANUALLY = "Committed patchset";

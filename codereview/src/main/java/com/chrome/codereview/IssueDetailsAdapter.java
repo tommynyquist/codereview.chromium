@@ -1,9 +1,11 @@
 package com.chrome.codereview;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,7 +50,7 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
             messageView.setText(R.string.empty_message);
             messageView.setTypeface(null, Typeface.ITALIC);
         } else {
-            messageView.setText(message.text());
+            messageView.setText(isExpanded ? message.text() : message.text().substring(0, Math.min(100, message.text().length())));
             messageView.setTypeface(null, Typeface.NORMAL);
         }
         ViewUtils.setText(convertView, R.id.sender, message.sender());
@@ -68,10 +70,13 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.patchset_item, parent, false);
         }
-        String patchSetText = context.getString(R.string.patchset, position) + patchSet.message();
+        String message = patchSet.message();
+        String patchSetText = position +": " + (TextUtils.isEmpty(message) ? context.getString(R.string.empty_message) : message);
         ViewUtils.setText(convertView, R.id.patchset_message, patchSetText);
         fillStatsView(convertView, patchSet.linesAdded(), patchSet.linesRemoved(), patchSet.numComments(), patchSet.numDrafts());
-        convertView.findViewById(R.id.list_divider).setVisibility(!isExpanded && position == issue.patchSets().size() ? View.INVISIBLE : View.VISIBLE);
+        convertView.findViewById(R.id.patchset_card).setBackgroundResource(isExpanded ? R.drawable.patchset_bg_expanded : R.drawable.patchset_bg_collapsed);
+        convertView.findViewById(R.id.list_divider).setVisibility(isExpanded ? View.VISIBLE: View.INVISIBLE);
+        convertView.findViewById(R.id.bottom_space).setVisibility(isExpanded ? View.GONE : View.VISIBLE);
         return convertView;
     }
 
@@ -180,6 +185,8 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         ViewUtils.setText(convertView, R.id.file_name, patchSetFile.path());
         fillFileStatusView((TextView) convertView.findViewById(R.id.file_status), patchSetFile.status());
         fillStatsView(convertView, patchSetFile.numAdded(), patchSetFile.numRemoved(), patchSetFile.numberOfComments(), patchSetFile.numberOfDrafts());
+        convertView.findViewById(R.id.list_divider).setVisibility(isLastChild ? View.INVISIBLE : View.VISIBLE);
+        convertView.setBackgroundResource(isLastChild ? R.drawable.patchset_file_bg_last : R.drawable.patchset_file_bg);
         return convertView;
     }
 
@@ -189,15 +196,15 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         int text = 0;
         switch (status) {
             case MODIFIED:
-                color = android.R.color.holo_blue_dark;
+                color = R.color.scheme_blue;
                 text = R.string.file_status_modified;
                 break;
             case ADDED:
-                color = android.R.color.holo_green_dark;
+                color = R.color.scheme_green;
                 text = R.string.file_status_added;
                 break;
             case DELETED:
-                color = android.R.color.holo_red_dark;
+                color = R.color.scheme_red;
                 text = R.string.file_status_deleted;
                 break;
         }
@@ -206,8 +213,8 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
     }
 
     public void fillStatsView(View convertView, int numAdded, int numRemoved, int numComments, int numDrafts) {
-        ForegroundColorSpan greenSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_green_dark));
-        ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(android.R.color.holo_red_dark));
+        ForegroundColorSpan greenSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.scheme_green));
+        ForegroundColorSpan redSpan = new ForegroundColorSpan(context.getResources().getColor(R.color.scheme_red));
         SpannableStringBuilder linesStats = createSpannedString(greenSpan, R.string.lines_added, numAdded, redSpan, R.string.lines_removed, numRemoved, ", ");
         ViewUtils.setText(convertView, R.id.diff_stats, linesStats);
 
@@ -233,10 +240,11 @@ class IssueDetailsAdapter extends BaseExpandableListAdapter {
         if (count1 != 0) {
             builder.append(separator);
         }
+        int start = builder.length();
         builder.append(context.getString(res2, count2));
 
         if (what2 != null) {
-            builder.setSpan(what2, text1.length() + separator.length(), builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            builder.setSpan(what2, start, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         }
         return builder;
     }

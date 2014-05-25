@@ -2,9 +2,11 @@ package com.chrome.codereview;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 
 import com.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.utils.EmailUtils;
 
 public class UserIssuesActivity extends Activity {
 
@@ -31,7 +33,7 @@ public class UserIssuesActivity extends Activity {
     }
 
     private void initializeViews(ServerCaller serverCaller) {
-        getActionBar().setTitle(serverCaller.getAccountName());
+        getActionBar().setTitle(getString(R.string.issues_title, EmailUtils.retrieveAccountName(serverCaller.getAccountName())));
         setContentView(R.layout.activity_issue_list);
     }
 

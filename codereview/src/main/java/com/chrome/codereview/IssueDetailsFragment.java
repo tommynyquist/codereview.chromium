@@ -101,6 +101,9 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
             IssueDetailsFragment.this.issue = issue;
             issueDetailsAdapter.setIssue(issue);
+            if (issue == null) {
+                return;
+            }
             getActivity().getActionBar().setTitle(issue.subject());
             getActivity().setProgressBarVisibility(false);
         }

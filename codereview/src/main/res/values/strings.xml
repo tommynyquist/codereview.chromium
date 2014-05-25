@@ -43,6 +43,9 @@
     <string name="hint_cc">CC</string>
     <string name="new_comment">New comment</string>
 
+    <string name="issues_title">Issues for %s</string>
+    <string name="reviewers">Reviewers:</string>
+
     <plurals name="year">
         <item quantity="one">year</item>
         <item quantity="other">years</item>

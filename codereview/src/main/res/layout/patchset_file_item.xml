@@ -1,47 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeightSmall">
+    android:layout_height="?android:attr/listPreferredItemHeightSmall"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingLeft="@dimen/list_item_horizontal_padding"
-        android:paddingRight="@dimen/list_item_horizontal_padding">
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/double_pace"
+        android:paddingRight="@dimen/double_pace">
 
-        <TextView
-            android:id="@+id/file_status"
-            android:layout_width="15dp"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            android:gravity="center"
-            android:textStyle="bold" />
+        <LinearLayout
+            android:id="@+id/file_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="bottom"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/file_name"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="start"
-            android:singleLine="true" />
+            <TextView
+                android:id="@+id/file_status"
+                android:layout_width="@dimen/double_pace"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/half_pace"
+                android:gravity="center"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/file_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="start"
+                android:fontFamily="sans-serif-light"
+                android:singleLine="true"
+                 />
+
+        </LinearLayout>
+
+        <include
+            layout="@layout/diff_details"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="top"
+            android:layout_weight="1"/>
 
     </LinearLayout>
 
-    <include
-        layout="@layout/diff_details"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <ImageView
         android:id="@+id/list_divider"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
         android:background="@drawable/list_divider"
-        android:layout_marginBottom="3dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="3dp" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/double_pace"
+        android:layout_marginRight="@dimen/double_pace"/>
 
 </LinearLayout>

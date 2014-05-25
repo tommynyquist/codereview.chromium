@@ -1,10 +1,14 @@
 package com.chrome.codereview;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +16,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.model.Message;
 import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
 import com.chrome.codereview.utils.DateUtils;
@@ -113,13 +118,11 @@ class UserIssuesAdapter extends BaseAdapter {
         }
         ViewUtils.setText(convertView, R.id.subject, issue.subject());
         ViewUtils.setText(convertView, R.id.owner, issue.owner());
+        ViewUtils.setText(convertView, R.id.issue_id, issue.id() + " by ");
         TextView reviewers = (TextView) convertView.findViewById(R.id.reviewers);
         reviewers.setText(reviewersSpannable(issue.reviewers()), TextView.BufferType.SPANNABLE);
         ViewUtils.setText(convertView, R.id.modified, DateUtils.createAgoText(context, issue.lastModified()));
 
-        boolean shouldShowDivider = position + 1 < boxes.size() ? boxes.get(position + 1).isBoxIssue() : false;
-        int visibility = shouldShowDivider ? View.VISIBLE : View.GONE;
-        convertView.findViewById(R.id.list_divider).setVisibility(visibility);
         return convertView;
     }
 
@@ -144,6 +147,12 @@ class UserIssuesAdapter extends BaseAdapter {
 
     public Spannable reviewersSpannable(List<Reviewer> reviewers) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
+        String reviewersPrefix = context.getString(R.string.reviewers);
+        int defaultColor = context.getResources().getColor(R.color.group_text_color);
+        builder.append(reviewersPrefix + " ");
+
+//        builder.setSpan(new ForegroundColorSpan(Color.rgb(85,85,85)), 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        builder.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         boolean firstReviewer = true;
         for (Reviewer reviewer : reviewers) {
             if (!firstReviewer) {
