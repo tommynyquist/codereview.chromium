@@ -33,6 +33,7 @@
 
     <string name="messages">MESSAGES</string>
     <string name="patchsets">PATCH SETS</string>
+    <string name="description">DESCRIPTION</string>
     <string name="publish_action">publish</string>
 
     <string name="quick_lgtm">Quick LGTM</string>

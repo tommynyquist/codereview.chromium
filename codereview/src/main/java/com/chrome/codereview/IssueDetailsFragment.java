@@ -3,7 +3,6 @@ package com.chrome.codereview;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.LoaderManager;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 
-import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
@@ -33,9 +31,6 @@ import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by sergeyv on 18/4/14.
@@ -184,7 +179,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
             return false;
         }
         PatchSet patchSet = (PatchSet) patchSetObject;
-        PatchSetFile file = issueDetailsAdapter.getChild(groupPosition, childPosition);
+        PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
         startDiffActivity(patchSet.id(), file);
         return true;
     }

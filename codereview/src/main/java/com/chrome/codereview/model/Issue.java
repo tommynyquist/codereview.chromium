@@ -21,6 +21,7 @@ public class Issue {
 
     private final String owner;
     private final String subject;
+    private final String description;
     private final boolean closed;
     private final List<Message> messages;
     private final List<Reviewer> reviewers;
@@ -29,9 +30,10 @@ public class Issue {
     private final String ccd;
     private final int id;
 
-    public Issue(String owner, String subject, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, String ccd, int id) {
+    public Issue(String owner, String subject, String description, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, String ccd, int id) {
         this.owner = owner;
         this.subject = subject;
+        this.description = description;
         this.closed = closed;
         this.messages = messages;
         this.reviewers = reviewers;
@@ -45,6 +47,7 @@ public class Issue {
         try {
             String owner = jsonObject.getString("owner");
             String subject = jsonObject.getString("subject");
+            String description = jsonObject.getString("description");
             boolean isClosed = jsonObject.getBoolean("closed");
             int issue = jsonObject.getInt("issue");
             List<Message> messages = jsonObject.has("messages") ? Message.from(jsonObject.getJSONArray("messages")) : Collections.<Message>emptyList();
@@ -55,7 +58,7 @@ public class Issue {
             for (int i = 0; i < ccJsonArray.length(); i++) {
                 ccList.add(ccJsonArray.getString(i));
             }
-            return new Issue(owner, subject, isClosed, messages, reviewers, lastModified, patchSets, TextUtils.join(", ", ccList), issue);
+            return new Issue(owner, subject, description, isClosed, messages, reviewers, lastModified, patchSets, TextUtils.join(", ", ccList), issue);
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -88,6 +91,10 @@ public class Issue {
 
     public String owner() {
         return owner;
+    }
+
+    public String description() {
+        return description;
     }
 
     public List<Message> messages() {
