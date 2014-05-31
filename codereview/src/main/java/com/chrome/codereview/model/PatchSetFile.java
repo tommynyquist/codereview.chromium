@@ -14,9 +14,26 @@ import java.util.List;
 public class PatchSetFile {
 
     public enum Status {
-        ADDED,
-        MODIFIED,
-        DELETED,
+        ADDED("A"),
+        MODIFIED("M"),
+        DELETED("D"),
+        MOVED_MODIFIED("A +") {
+            @Override
+            public String toString() {
+                return "A+";
+            }
+        };
+
+        private final String text;
+
+        Status(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     private final int id;
@@ -84,12 +101,11 @@ public class PatchSetFile {
         int numRemoved = metaData.getInt("num_removed");
         String statusString = metaData.getString("status");
         Status status = null;
-        if (TextUtils.equals(statusString, "M")) {
-            status = Status.MODIFIED;
-        } else if (TextUtils.equals(statusString, "A")) {
-            status = Status.ADDED;
-        } else if (TextUtils.equals(statusString, "D")) {
-            status = Status.DELETED;
+        for (Status s: Status.values()) {
+            if (TextUtils.equals(s.text, statusString)) {
+                status = s;
+                break;
+            }
         }
         if (status == null) {
             throw new IllegalArgumentException("Unknown status: " + statusString);

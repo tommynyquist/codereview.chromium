@@ -23,10 +23,10 @@
 
             <TextView
                 android:id="@+id/file_status"
-                android:layout_width="@dimen/double_pace"
+                android:layout_width="20dp"
+                android:paddingLeft="2dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/half_pace"
-                android:gravity="center"
+                android:gravity="left"
                 android:textStyle="bold" />
 
             <TextView
