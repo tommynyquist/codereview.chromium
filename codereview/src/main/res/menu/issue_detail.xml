@@ -7,4 +7,10 @@
         android:title="@string/publish_action"
         android:showAsAction="always" />
 
+
+    <item android:id="@+id/action_commit"
+        android:icon="@drawable/ic_action_play"
+        android:title="@string/publish_commit"
+        android:showAsAction="always" />
+
 </menu>

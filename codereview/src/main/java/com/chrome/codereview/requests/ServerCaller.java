@@ -74,6 +74,7 @@ public class ServerCaller {
     private static final String PUBLISH = "publish";
     private static final String ISSUE_PATH = "issue";
     private static final Uri DOWNLOAD_DIFF = BASE_URL.buildUpon().appendPath("download").build();
+    private static final String COMMIT_PATH = "edit_flags";
 
     private final DefaultHttpClient httpClient;
     private Account chromiumAccount;
@@ -147,18 +148,10 @@ public class ServerCaller {
 
     public void publish(PublishData data) throws IOException, AuthenticationException, GoogleAuthException {
         Uri uri = BASE_URL.buildUpon().appendPath(data.issueId() + "").appendPath(PUBLISH).build();
-        HttpPost post = new HttpPost(uri.toString());
         ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         nameValuePairs.add(new BasicNameValuePair("xsrf_token", getXsrfToken()));
         nameValuePairs.addAll(data.toList());
-        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(nameValuePairs);
-        post.setEntity(formEntity);
-        HttpResponse response = httpClient.execute(post);
-        HttpEntity entity = response.getEntity();
-        if (entity != null) {
-            entity.consumeContent();
-        }
-
+        executePost(uri, nameValuePairs);
     }
 
     public Diff loadDiff(int issueId, int patchSetId) throws IOException {
@@ -258,7 +251,6 @@ public class ServerCaller {
     }
 
     public void inlineDraft(int issueId, int patchSetId, int patchId, Comment comment) throws IOException {
-        HttpPost post = new HttpPost(INLINE_DRAFT.toString());
         ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         nameValuePairs.add(new BasicNameValuePair("side", comment.left() ? "a" : "b"));
         nameValuePairs.add(new BasicNameValuePair("snapshot", comment.left() ? "old" : "new"));
@@ -270,7 +262,21 @@ public class ServerCaller {
         if (!TextUtils.isEmpty(comment.messageId())) {
             nameValuePairs.add(new BasicNameValuePair("message_id", comment.messageId()));
         }
-        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(nameValuePairs);
+        executePost(INLINE_DRAFT, nameValuePairs);
+    }
+
+    public void checkCQBit(int issueId, int patchSetId, boolean commit) throws GoogleAuthException, IOException, AuthenticationException {
+        Uri uri = BASE_URL.buildUpon().appendPath(issueId + "").appendPath(COMMIT_PATH).build();
+        ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        nameValuePairs.add(new BasicNameValuePair("xsrf_token", getXsrfToken()));
+        nameValuePairs.add(new BasicNameValuePair("commit", commit ? "1" : "0"));
+        nameValuePairs.add(new BasicNameValuePair("last_patchset", patchSetId + ""));
+        executePost(uri, nameValuePairs);
+    }
+
+    private void executePost(Uri uri, List<? extends NameValuePair> parameters) throws IOException {
+        HttpPost post = new HttpPost(uri.toString());
+        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
         post.setEntity(formEntity);
         HttpResponse response = httpClient.execute(post);
         HttpEntity entity = response.getEntity();

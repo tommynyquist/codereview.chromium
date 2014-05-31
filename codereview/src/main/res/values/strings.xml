@@ -35,6 +35,7 @@
     <string name="patchsets">PATCH SETS</string>
     <string name="description">DESCRIPTION</string>
     <string name="publish_action">publish</string>
+    <string name="publish_commit">check CQ bit</string>
 
     <string name="quick_lgtm">Quick LGTM</string>
     <string name="subject_hint">Subject</string>
@@ -46,6 +47,7 @@
 
     <string name="issues_title">Issues for %s</string>
     <string name="reviewers">Reviewers:</string>
+    <string name="fail_to_commit">Can\'t commit before issue was loaded.</string>
 
     <plurals name="year">
         <item quantity="one">year</item>

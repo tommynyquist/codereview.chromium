@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
+import android.widget.Toast;
 
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
@@ -41,8 +42,10 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
+    private static final int COMMIT_LOADER_ID = 2;
     private static final int REQUEST_CODE_DIFF = 1;
     private static final String PUBLISH_DATA_ARG = "publishData";
+    private Menu menu;
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -59,11 +62,11 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
     }
 
-    private static class PublishLoaded extends CachedLoader<Boolean> {
+    private static class PublishLoader extends CachedLoader<Boolean> {
 
         private PublishData publishData;
 
-        public PublishLoaded(Context context, PublishData publishData) {
+        public PublishLoader(Context context, PublishData publishData) {
             super(context);
             this.publishData = publishData;
         }
@@ -71,7 +74,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         @Override
         public Boolean loadInBackground() {
             try {
-                System.out.println("doInBackground");
                 serverCaller().publish(publishData);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -83,6 +85,35 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
             return true;
         }
     }
+
+    private static class CommitLoader extends CachedLoader<Boolean> {
+
+        private final int issuedId;
+        private final int patchSetId;
+        private final boolean commit;
+
+        public CommitLoader(Context context, int issuedId, int patchSetId, boolean commit) {
+            super(context);
+            this.issuedId = issuedId;
+            this.patchSetId = patchSetId;
+            this.commit = commit;
+        }
+
+        @Override
+        public Boolean loadInBackground() {
+            try {
+                serverCaller().checkCQBit(issuedId, patchSetId, commit);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (GoogleAuthException e) {
+                e.printStackTrace();
+            } catch (AuthenticationException e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+    }
+
 
     private LoaderManager.LoaderCallbacks<Issue> issueLoaderCallback = new LoaderManager.LoaderCallbacks<Issue>() {
 
@@ -96,11 +127,13 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
             IssueDetailsFragment.this.issue = issue;
             issueDetailsAdapter.setIssue(issue);
+            getActivity().setProgressBarVisibility(false);
             if (issue == null) {
                 return;
             }
+
             getActivity().getActionBar().setTitle(issue.subject());
-            getActivity().setProgressBarVisibility(false);
+            menu.getItem(1).setIcon(issue.isInCQ() ? R.drawable.ic_action_stop : R.drawable.ic_action_play);
         }
 
         @Override
@@ -115,7 +148,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
             getActivity().setProgressBarVisibility(true);
-            return new PublishLoaded(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
+            return new PublishLoader(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
         }
 
         @Override
@@ -125,6 +158,25 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
         @Override
         public void onLoaderReset(Loader<Boolean> loader) {
+        }
+    };
+
+    private LoaderManager.LoaderCallbacks<Boolean> commitLoaderCallback = new LoaderManager.LoaderCallbacks<Boolean>() {
+        @Override
+        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            getActivity().setProgressBarVisibility(true);
+            int patchSetId = issue.patchSets().get(issue.patchSets().size() - 1).id();
+            return new CommitLoader(getActivity(), issueId, patchSetId, !issue.isInCQ());
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
+            getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Boolean> loader) {
+
         }
     };
 
@@ -141,7 +193,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         if (issueId == -1) {
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
-        getActivity().getActionBar().setTitle(getString(R.string.issue) + " " +issueId);
+        getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
         issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
         View view = inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
@@ -153,6 +205,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        this.menu = menu;
         inflater.inflate(R.menu.issue_detail, menu);
     }
 
@@ -205,9 +258,17 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_publish) {
-            showPublishDialog();
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_publish:
+                showPublishDialog();
+                return true;
+            case R.id.action_commit:
+                if (issue != null) {
+                    getLoaderManager().restartLoader(COMMIT_LOADER_ID, null, commitLoaderCallback);
+                } else {
+                    Toast.makeText(getActivity(), getString(R.string.fail_to_commit), Toast.LENGTH_LONG).show();
+                }
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

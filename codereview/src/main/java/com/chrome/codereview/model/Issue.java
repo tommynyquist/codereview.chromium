@@ -29,8 +29,9 @@ public class Issue {
     private final List<PatchSet> patchSets;
     private final String ccd;
     private final int id;
+    private final boolean isInCQ;
 
-    public Issue(String owner, String subject, String description, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, String ccd, int id) {
+    public Issue(String owner, String subject, String description, boolean closed, List<Message> messages, List<Reviewer> reviewers, Date lastModified, List<PatchSet> patchSets, String ccd, int id, boolean isInCQ) {
         this.owner = owner;
         this.subject = subject;
         this.description = description;
@@ -41,6 +42,7 @@ public class Issue {
         this.patchSets = patchSets;
         this.ccd = ccd;
         this.id = id;
+        this.isInCQ = isInCQ;
     }
 
     public static Issue fromJSONObject(JSONObject jsonObject, List<PatchSet> patchSets) {
@@ -58,7 +60,8 @@ public class Issue {
             for (int i = 0; i < ccJsonArray.length(); i++) {
                 ccList.add(ccJsonArray.getString(i));
             }
-            return new Issue(owner, subject, description, isClosed, messages, reviewers, lastModified, patchSets, TextUtils.join(", ", ccList), issue);
+            boolean isInCQ = jsonObject.getBoolean("commit");
+            return new Issue(owner, subject, description, isClosed, messages, reviewers, lastModified, patchSets, TextUtils.join(", ", ccList), issue, isInCQ);
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -123,6 +126,10 @@ public class Issue {
 
     public List<PatchSet> patchSets() {
         return patchSets;
+    }
+
+    public boolean isInCQ() {
+        return isInCQ;
     }
 }
 
