@@ -1,7 +1,6 @@
 package com.chrome.codereview;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,6 +23,7 @@ import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
 import com.chrome.codereview.model.PublishData;
+import com.chrome.codereview.utils.BaseFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.ViewUtils;
 import com.google.android.gms.auth.GoogleAuthException;
@@ -33,12 +33,10 @@ import org.apache.http.auth.AuthenticationException;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
-
 /**
  * Created by sergeyv on 18/4/14.
  */
-public class IssueDetailsFragment extends Fragment implements DialogInterface.OnClickListener, ExpandableListView.OnChildClickListener {
+public class IssueDetailsFragment extends BaseFragment implements DialogInterface.OnClickListener, ExpandableListView.OnChildClickListener {
 
     public static final String EXTRA_ISSUE_ID = "EXTRA_ISSUE_ID";
 
@@ -47,7 +45,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private static final int COMMIT_LOADER_ID = 2;
     private static final int REQUEST_CODE_DIFF = 1;
     private static final String PUBLISH_DATA_ARG = "publishData";
-    private Menu menu;
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
@@ -149,7 +146,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
-            getActivity().setProgressBarVisibility(true);
+            startProgress();
             return new PublishLoader(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
         }
 
@@ -186,7 +183,12 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private Issue issue;
     private AlertDialog publishDialog;
     private IssueDetailsAdapter issueDetailsAdapter;
-    private SmoothProgressBar progress;
+    private Menu menu;
+
+    @Override
+    protected int getLayoutRes() {
+        return R.layout.fragment_issue_detail;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -197,13 +199,12 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         }
         getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
         issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
-        View view = inflater.inflate(R.layout.fragment_issue_detail, container);
-        ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
-        progress = (SmoothProgressBar) view.findViewById(android.R.id.progress);
+        View layout = super.onCreateView(inflater, container, savedInstanceState);
+        ExpandableListView listView = (ExpandableListView) layout.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
         listView.setAdapter(issueDetailsAdapter);
         getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
-        return view;
+        return layout;
     }
 
     @Override
@@ -291,14 +292,5 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());
         intent.putParcelableArrayListExtra(DiffFragment.COMMENTS_EXTRA, new ArrayList<Parcelable>(file.comments()));
         startActivityForResult(intent, REQUEST_CODE_DIFF);
-    }
-
-    private void startProgress() {
-        progress.setIndeterminate(true);
-        progress.progressiveStart();
-    }
-
-    private void stopProgress() {
-        progress.progressiveStop();
     }
 }

@@ -1,7 +1,6 @@
 package com.chrome.codereview;
 
 import android.app.AlertDialog;
-import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,12 +15,12 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ProgressBar;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
+import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.ViewUtils;
@@ -34,7 +33,7 @@ import java.util.List;
 /**
  * Created by sergeyv on 29/4/14.
  */
-public class DiffFragment extends ListFragment implements AdapterView.OnItemClickListener {
+public class DiffFragment extends BaseListFragment implements AdapterView.OnItemClickListener {
 
     public static final int RESULT_REFRESH = 10;
     public static final String COMMENTS_EXTRA = "COMMENTS_EXTRA";
@@ -312,6 +311,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public void onLoadFinished(Loader<FileDiff> loader, FileDiff data) {
+            stopProgress();
             if (data == null) {
                 return;
             }
@@ -330,7 +330,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public Loader<Void> onCreateLoader(int id, Bundle args) {
-            getActivity().setProgressBarVisibility(true);
+            startProgress();
             return new InlineDraftLoader(getActivity(), issueId, patchSetId, patchId, (Comment) args.getParcelable(KEY_COMMENT));
         }
 
@@ -354,7 +354,7 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
 
         @Override
         public void onLoadFinished(Loader<PatchSet> loader, PatchSet data) {
-            getActivity().setProgressBarVisibility(false);
+            stopProgress();
             if (data == null) {
                 return;
             }
@@ -374,15 +374,20 @@ public class DiffFragment extends ListFragment implements AdapterView.OnItemClic
     };
 
     @Override
+    protected int getLayoutRes() {
+        return R.layout.fragment_diff;
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().setProgressBarIndeterminate(true);
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        startProgress();
         Intent intent = getActivity().getIntent();
         comments = intent.getParcelableArrayListExtra(COMMENTS_EXTRA);
         issueId = intent.getIntExtra(ISSUE_ID_EXTRA, -1);
         patchSetId = intent.getIntExtra(PATCH_SET_ID_EXTRA, -1);
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
-        View view = inflater.inflate(R.layout.diff_fragment, container, false);
         return view;
     }
 
