@@ -94,23 +94,20 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
 
     private void fillFileStatusView(TextView view, PatchSetFile.Status status) {
         int color = 0;
-        int text = 0;
         switch (status) {
+            case MOVED_MODIFIED:
             case MODIFIED:
                 color = R.color.scheme_blue;
-                text = R.string.file_status_modified;
                 break;
             case ADDED:
                 color = R.color.scheme_green;
-                text = R.string.file_status_added;
                 break;
             case DELETED:
                 color = R.color.scheme_red;
-                text = R.string.file_status_deleted;
                 break;
         }
         view.setTextColor(context.getResources().getColor(color));
-        view.setText(text);
+        view.setText(status.toString());
     }
 
     public void fillStatsView(View convertView, int numAdded, int numRemoved, int numComments, int numDrafts) {

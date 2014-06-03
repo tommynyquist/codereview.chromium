@@ -33,6 +33,8 @@ import org.apache.http.auth.AuthenticationException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
+
 /**
  * Created by sergeyv on 18/4/14.
  */
@@ -119,7 +121,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
         @Override
         public Loader<Issue> onCreateLoader(int id, Bundle args) {
-            getActivity().setProgressBarVisibility(true);
+            startProgress();
             return new IssueLoader(getActivity(), issueId);
         }
 
@@ -127,7 +129,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
             IssueDetailsFragment.this.issue = issue;
             issueDetailsAdapter.setIssue(issue);
-            getActivity().setProgressBarVisibility(false);
+            stopProgress();
             if (issue == null) {
                 return;
             }
@@ -164,7 +166,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private LoaderManager.LoaderCallbacks<Boolean> commitLoaderCallback = new LoaderManager.LoaderCallbacks<Boolean>() {
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
-            getActivity().setProgressBarVisibility(true);
+            startProgress();
             int patchSetId = issue.patchSets().get(issue.patchSets().size() - 1).id();
             return new CommitLoader(getActivity(), issueId, patchSetId, !issue.isInCQ());
         }
@@ -184,10 +186,10 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
     private Issue issue;
     private AlertDialog publishDialog;
     private IssueDetailsAdapter issueDetailsAdapter;
+    private SmoothProgressBar progress;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().setProgressBarIndeterminate(true);
         setHasOptionsMenu(true);
         issueId = getActivity().getIntent().getIntExtra(EXTRA_ISSUE_ID, -1);
         if (issueId == -1) {
@@ -197,6 +199,7 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
         View view = inflater.inflate(R.layout.fragment_issue_detail, container);
         ExpandableListView listView = (ExpandableListView) view.findViewById(android.R.id.list);
+        progress = (SmoothProgressBar) view.findViewById(android.R.id.progress);
         listView.setOnChildClickListener(this);
         listView.setAdapter(issueDetailsAdapter);
         getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
@@ -275,7 +278,6 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == DiffFragment.RESULT_REFRESH) {
             getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
         }
@@ -289,5 +291,14 @@ public class IssueDetailsFragment extends Fragment implements DialogInterface.On
         intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());
         intent.putParcelableArrayListExtra(DiffFragment.COMMENTS_EXTRA, new ArrayList<Parcelable>(file.comments()));
         startActivityForResult(intent, REQUEST_CODE_DIFF);
+    }
+
+    private void startProgress() {
+        progress.setIndeterminate(true);
+        progress.progressiveStart();
+    }
+
+    private void stopProgress() {
+        progress.progressiveStop();
     }
 }

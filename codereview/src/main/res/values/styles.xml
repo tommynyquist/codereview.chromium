@@ -3,12 +3,11 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <item name="android:actionBarStyle">@style/ProgressBarActionBar</item>
-
     </style>
 
     <style name="ProgressBarActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
-        <item name="android:progressBarPadding">0dip</item>
         <item name="android:background">#324359</item>
+        <item name="android:displayOptions">showTitle</item>
     </style>
 
     <style name="CodeText">
@@ -17,6 +16,19 @@
         <item name="android:textColor">@color/text</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
+    </style>
+
+    <style name="DefaultProgressBar" parent="SmoothProgressBar">
+        <item name="android:id">@android:id/progress</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/half_pace</item>
+        <item name="android:indeterminate">true</item>
+        <item name="spb_stroke_separator_length">0dp</item>
+        <item name="spb_sections_count">3</item>
+        <item name="spb_speed">1.7</item>
+        <item name="android:interpolator">@android:anim/decelerate_interpolator</item>
+        <item name="spb_colors">@array/shades1</item>
+        <item name="spb_gradients">true</item>
     </style>
 
 </resources>

@@ -1,17 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.chrome.codereview.IssueDetailsFragment">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <fr.castorflex.android.smoothprogressbar.SmoothProgressBar style="@style/DefaultProgressBar" />
 
-    <ExpandableListView
+    <ListView
         android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@null"
-        android:groupIndicator="@null"/>
+        android:divider="@null"/>
 
 </LinearLayout>
