@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,7 +30,6 @@ import com.google.android.gms.auth.GoogleAuthException;
 import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * Created by sergeyv on 18/4/14.
@@ -39,11 +37,11 @@ import java.util.ArrayList;
 public class IssueDetailsFragment extends BaseFragment implements DialogInterface.OnClickListener, ExpandableListView.OnChildClickListener {
 
     public static final String EXTRA_ISSUE_ID = "EXTRA_ISSUE_ID";
+    public static final int REQUEST_CODE_DIFF = 1;
 
     private static final int ISSUE_LOADER_ID = 0;
     private static final int PUBLISH_LOADER_ID = 1;
     private static final int COMMIT_LOADER_ID = 2;
-    private static final int REQUEST_CODE_DIFF = 1;
     private static final String PUBLISH_DATA_ARG = "publishData";
 
     private static class IssueLoader extends CachedLoader<Issue> {
@@ -113,17 +111,18 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         }
     }
 
-
     private LoaderManager.LoaderCallbacks<Issue> issueLoaderCallback = new LoaderManager.LoaderCallbacks<Issue>() {
 
         @Override
         public Loader<Issue> onCreateLoader(int id, Bundle args) {
+            enableMenuButtons(false);
             startProgress();
             return new IssueLoader(getActivity(), issueId);
         }
 
         @Override
         public void onLoadFinished(Loader<Issue> loader, Issue issue) {
+            enableMenuButtons(true);
             IssueDetailsFragment.this.issue = issue;
             issueDetailsAdapter.setIssue(issue);
             stopProgress();
@@ -132,7 +131,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
             }
 
             getActivity().getActionBar().setTitle(issue.subject());
-            menu.getItem(1).setIcon(issue.isInCQ() ? R.drawable.ic_action_stop : R.drawable.ic_action_play);
+            commitItem.setIcon(issue.isInCQ() ? R.drawable.ic_action_stop : R.drawable.ic_action_play);
         }
 
         @Override
@@ -146,12 +145,14 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
+            enableMenuButtons(false);
             startProgress();
             return new PublishLoader(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
         }
 
         @Override
         public void onLoadFinished(Loader<Boolean> loader, Boolean v) {
+            enableMenuButtons(true);
             getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
         }
 
@@ -164,6 +165,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         @Override
         public Loader<Boolean> onCreateLoader(int id, Bundle args) {
             startProgress();
+            commitItem.setEnabled(false);
             int patchSetId = issue.patchSets().get(issue.patchSets().size() - 1).id();
             return new CommitLoader(getActivity(), issueId, patchSetId, !issue.isInCQ());
         }
@@ -183,7 +185,9 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
     private Issue issue;
     private AlertDialog publishDialog;
     private IssueDetailsAdapter issueDetailsAdapter;
-    private Menu menu;
+    private MenuItem commitItem;
+    private MenuItem publishItem;
+    private boolean menuItemState;
 
     @Override
     protected int getLayoutRes() {
@@ -198,7 +202,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
         getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
-        issueDetailsAdapter = new IssueDetailsAdapter(getActivity());
+        issueDetailsAdapter = new IssueDetailsAdapter(getActivity(), issueId);
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         ExpandableListView listView = (ExpandableListView) layout.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
@@ -209,8 +213,10 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        this.menu = menu;
         inflater.inflate(R.menu.issue_detail, menu);
+        publishItem = menu.getItem(0);
+        commitItem = menu.getItem(1);
+        enableMenuButtons(menuItemState);
     }
 
     private String getTextFromPublishDialog(int id) {
@@ -237,7 +243,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         }
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
-        startDiffActivity(patchSet.id(), file);
+        DiffActivity.startDiffActivity(getActivity(), REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
         return true;
     }
 
@@ -284,13 +290,13 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         }
     }
 
-    private void startDiffActivity(int patchSetId, PatchSetFile file) {
-        Intent intent = new Intent(getActivity(), DiffActivity.class);
-        intent.putExtra(DiffActivity.PATH_EXTRA, file.path());
-        intent.putExtra(DiffFragment.ISSUE_ID_EXTRA, issueId);
-        intent.putExtra(DiffFragment.PATCH_SET_ID_EXTRA, patchSetId);
-        intent.putExtra(DiffFragment.PATCH_ID_EXTRA, file.id());
-        intent.putParcelableArrayListExtra(DiffFragment.COMMENTS_EXTRA, new ArrayList<Parcelable>(file.comments()));
-        startActivityForResult(intent, REQUEST_CODE_DIFF);
+    private void enableMenuButtons(boolean enabled) {
+        menuItemState = enabled;
+        if (publishItem == null || commitItem == null) {
+            return;
+        }
+        publishItem.setEnabled(enabled);
+        commitItem.setEnabled(enabled);
     }
 }
+

@@ -57,12 +57,12 @@ public class ServerCaller {
         NEEDS_ACCOUNT,
         NEEDS_AUTHORIZATION;
     }
+    public static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
     private static final String XSRF_TOKEN_TIME_PREFERENCE = "ServerCaller_XSRF_TOKEN_TIME_PREFERENCE";
     private static final int TOKEN_LIFE_TIME = 25;//min
-    private static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
     private static final String CHROMIUM_EMAIL = "@chromium.org";
     private static final String TOKEN_TYPE = "ah";
 

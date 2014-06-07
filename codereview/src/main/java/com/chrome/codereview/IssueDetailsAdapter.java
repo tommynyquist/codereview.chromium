@@ -1,5 +1,6 @@
 package com.chrome.codereview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -8,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.chrome.codereview.model.Issue;
-import com.chrome.codereview.model.Message;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.utils.HeadedExpandableListAdapter;
 import com.chrome.codereview.utils.LinearExpandableAdapter;
@@ -54,19 +54,19 @@ class IssueDetailsAdapter extends MergeExpandableListAdapter {
     private MessagesAdapter messagesAdapter;
     private DescriptionAdapter descriptionAdapter;
 
-    public IssueDetailsAdapter(Context context) {
+    public IssueDetailsAdapter(Activity activity, int issueId) {
         super();
         descriptionAdapter = new DescriptionAdapter();
         add(new HeadedExpandableListAdapter(descriptionAdapter, R.layout.list_group_header, R.string.description));
-        patchSetsAdapter = new PatchSetsAdapter(context);
+        patchSetsAdapter = new PatchSetsAdapter(activity);
         add(new HeadedExpandableListAdapter(patchSetsAdapter, R.layout.list_group_header, R.string.patchsets));
-        messagesAdapter = new MessagesAdapter(context);
+        messagesAdapter = new MessagesAdapter(activity, issueId);
         add(new HeadedExpandableListAdapter(messagesAdapter, R.layout.list_group_header, R.string.messages));
     }
 
     void setIssue(Issue issue) {
         descriptionAdapter.setDescription(issue != null ? issue.description() : "");
-        messagesAdapter.setMessages(issue != null ? issue.messages() : new ArrayList<Message>());
+        messagesAdapter.setIssue(issue);
         patchSetsAdapter.setPatchsets(issue != null ? issue.patchSets() : new ArrayList<PatchSet>());
         notifyDataSetChanged();
     }
