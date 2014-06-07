@@ -58,6 +58,7 @@ public class ServerCaller {
         NEEDS_AUTHORIZATION;
     }
     public static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
+    public static final Uri SECONDARY_URL = Uri.parse("https://chromiumcodereview.appspot.com");
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";

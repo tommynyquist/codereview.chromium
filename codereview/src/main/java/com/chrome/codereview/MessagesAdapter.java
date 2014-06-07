@@ -41,12 +41,18 @@ public class MessagesAdapter extends LinearExpandableAdapter {
                 return;
             }
             String url = getURL();
-            String prefix = ServerCaller.BASE_URL.buildUpon().appendPath(issueId + "").appendPath("diff").toString();
-            if (!url.startsWith(prefix)) {
+            String rest = "";
+            String prefix1 = ServerCaller.BASE_URL.buildUpon().appendPath(issueId + "").appendPath("diff").toString();
+            String prefix2 = ServerCaller.SECONDARY_URL.buildUpon().appendPath(issueId + "").appendPath("diff").toString();
+            if (url.startsWith(prefix1)) {
+                rest = url.substring(prefix1.length() + 1);
+            } else if (url.startsWith(prefix2)) {
+                rest = url.substring(prefix2.length() + 1);
+            } else {
                 super.onClick(widget);
                 return;
             }
-            String rest = url.substring(prefix.length() + 1);
+
             PatchSet foundPatchSet = null;
             for (PatchSet patchSet: issue.patchSets()) {
                 if (rest.startsWith(patchSet.id() + "")) {
