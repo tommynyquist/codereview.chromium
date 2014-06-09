@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <fr.castorflex.android.smoothprogressbar.SmoothProgressBar style="@style/DefaultProgressBar" />
 
     <ListView
         android:id="@android:id/list"
@@ -13,4 +10,6 @@
         android:layout_height="match_parent"
         android:divider="@null"/>
 
-</LinearLayout>
+    <fr.castorflex.android.smoothprogressbar.SmoothProgressBar style="@style/DefaultProgressBar" />
+
+</FrameLayout>

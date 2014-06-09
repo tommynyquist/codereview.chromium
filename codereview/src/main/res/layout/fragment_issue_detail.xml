@@ -1,11 +1,8 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context="com.chrome.codereview.IssueDetailsFragment">
-
-    <fr.castorflex.android.smoothprogressbar.SmoothProgressBar style="@style/DefaultProgressBar" />
 
     <ExpandableListView
         android:id="@android:id/list"
@@ -14,4 +11,6 @@
         android:divider="@null"
         android:groupIndicator="@null"/>
 
-</LinearLayout>
+    <fr.castorflex.android.smoothprogressbar.SmoothProgressBar style="@style/DefaultProgressBar" />
+
+</FrameLayout>

@@ -137,11 +137,11 @@ public class MessagesAdapter extends LinearExpandableAdapter {
         while (m.find()) {
             int start = m.start();
             int end = m.end();
-            DiffUrlSpan span = new DiffUrlSpan(m.group(0));
-            spannableString.setSpan(span, start, Math.min(end, spannableString.length() - 1), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-            if (end >= spannableString.length()) {
+            if (start >= spannableString.length()) {
                 break;
             }
+            DiffUrlSpan span = new DiffUrlSpan(m.group(0));
+            spannableString.setSpan(span, start, Math.min(end, spannableString.length() - 1), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
         return spannableString;
     }
