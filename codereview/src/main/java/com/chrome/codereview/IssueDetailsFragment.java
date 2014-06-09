@@ -225,7 +225,8 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
     @Override
     public void onClick(DialogInterface dialog, int which) {
-        String message = getTextFromPublishDialog(R.id.publish_message);
+        String prefix = dialog.BUTTON_NEUTRAL == which ? "lgtm.\n" : "";
+        String message = prefix + getTextFromPublishDialog(R.id.publish_message);
         String subject = getTextFromPublishDialog(R.id.publish_subject);
         String cc = getTextFromPublishDialog(R.id.publish_cc);
         String reviewers = getTextFromPublishDialog(R.id.publish_reviewers);
@@ -260,7 +261,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
             ViewUtils.setText(publishView, R.id.publish_cc, issue.ccdString());
         }
         builder.setPositiveButton(R.string.publish_action, this);
-        builder.setNeutralButton(R.string.quick_lgtm, null);
+        builder.setNeutralButton(R.string.quick_lgtm, this);
         builder.setNegativeButton(android.R.string.cancel, null);
         publishDialog = builder.create();
         publishDialog.show();
