@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.chrome.codereview">
+    package="com.chrome.codereview"
+    android:versionCode="2">
 
 
     <application
@@ -17,7 +18,7 @@
         <activity
             android:name="com.chrome.codereview.LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_code_review_login"/>
+            android:label="@string/title_activity_code_review_login" />
         <activity
             android:name=".UserIssuesActivity"
             android:configChanges="keyboardHidden|orientation|screenSize">
