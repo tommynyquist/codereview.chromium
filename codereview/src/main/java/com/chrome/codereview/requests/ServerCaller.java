@@ -136,7 +136,6 @@ public class ServerCaller {
         if (accountName == null) {
             return null;
         }
-        long l = System.currentTimeMillis();
         ExecutorService service = Executors.newFixedThreadPool(3);
         Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).withMessages().create()));
         Future<List<Issue>> futureCcIssues = service.submit(createSearchCallable(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
@@ -145,7 +144,6 @@ public class ServerCaller {
             List<Issue> mineIssues = futureMineIssues.get();
             List<Issue> ccIssues = futureCcIssues.get();
             List<Issue> onReviewIssues = futureOnReviewIssues.get();
-            System.out.println("BITCH " + (System.currentTimeMillis() - l));
             return new UserIssues(onReviewIssues, mineIssues, ccIssues);
         } catch (InterruptedException e) {
             e.printStackTrace();
