@@ -202,7 +202,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
             throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
         }
         getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
-        issueDetailsAdapter = new IssueDetailsAdapter(getActivity(), issueId);
+        issueDetailsAdapter = new IssueDetailsAdapter(this, issueId);
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         ExpandableListView listView = (ExpandableListView) layout.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
@@ -244,7 +244,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         }
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
-        DiffActivity.startDiffActivity(getActivity(), REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
+        DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
         return true;
     }
 

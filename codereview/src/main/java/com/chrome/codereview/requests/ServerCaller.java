@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.http.AndroidHttpClient;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
@@ -27,14 +28,18 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientPNames;
+import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,6 +50,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -77,15 +87,17 @@ public class ServerCaller {
     private static final Uri DOWNLOAD_DIFF = BASE_URL.buildUpon().appendPath("download").build();
     private static final String COMMIT_PATH = "edit_flags";
 
-    private final DefaultHttpClient httpClient;
+    private final AndroidHttpClient httpClient;
+    private final BasicHttpContext httpContext;
     private Account chromiumAccount;
     private State state;
     private Context context;
 
     public ServerCaller(Context context) {
         this.context = context;
-        httpClient = new DefaultHttpClient();
-        httpClient.setCookieStore(new PersistentCookieStore(context));
+        httpClient = AndroidHttpClient.newInstance("");
+        httpContext = new BasicHttpContext();
+        httpContext.setAttribute(ClientContext.COOKIE_STORE, new PersistentCookieStore(context));
         reset();
     }
 
@@ -124,10 +136,23 @@ public class ServerCaller {
         if (accountName == null) {
             return null;
         }
-        List<Issue> mineIssues = search(new SearchOptions.Builder().owner(accountName).withMessages().create());
-        List<Issue> ccIssues = search(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create());
-        List<Issue> onReviewIssues = search(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create());
-        return new UserIssues(onReviewIssues, mineIssues, ccIssues);
+        long l = System.currentTimeMillis();
+        ExecutorService service = Executors.newFixedThreadPool(3);
+        Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).withMessages().create()));
+        Future<List<Issue>> futureCcIssues = service.submit(createSearchCallable(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
+        Future<List<Issue>> futureOnReviewIssues = service.submit(createSearchCallable(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
+        try {
+            List<Issue> mineIssues = futureMineIssues.get();
+            List<Issue> ccIssues = futureCcIssues.get();
+            List<Issue> onReviewIssues = futureOnReviewIssues.get();
+            System.out.println("BITCH " + (System.currentTimeMillis() - l));
+            return new UserIssues(onReviewIssues, mineIssues, ccIssues);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return new UserIssues(new ArrayList<Issue>(), new ArrayList<Issue>(), new ArrayList<Issue>());
     }
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {
@@ -185,7 +210,8 @@ public class ServerCaller {
     }
 
     private boolean hasValidAuthCookie() {
-        for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
+        CookieStore cookieStore = (CookieStore) httpContext.getAttribute(ClientContext.COOKIE_STORE);
+        for (Cookie cookie : cookieStore.getCookies()) {
             if (cookie.getName().equals(AUTH_COOKIE_NAME) && !cookie.isExpired(new Date())) {
                 state = State.OK;
                 return true;
@@ -198,7 +224,7 @@ public class ServerCaller {
         String url = AUTH_COOKIE_URL.buildUpon().appendQueryParameter("auth", authToken).build().toString();
         HttpGet method = new HttpGet(url);
         httpClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
-        HttpResponse res = httpClient.execute(method);
+        HttpResponse res = httpClient.execute(method, httpContext);
         Header[] headers = res.getHeaders("Set-Cookie");
         if (res.getEntity() != null) {
             res.getEntity().consumeContent();
@@ -251,6 +277,15 @@ public class ServerCaller {
         return Collections.emptyList();
     }
 
+    private Callable<List<Issue>> createSearchCallable(final SearchOptions options) {
+        return new Callable<List<Issue>>() {
+            @Override
+            public List<Issue> call() throws Exception {
+                return search(options);
+            }
+        };
+    }
+
     public void inlineDraft(int issueId, int patchSetId, int patchId, Comment comment) throws IOException {
         ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         nameValuePairs.add(new BasicNameValuePair("side", comment.left() ? "a" : "b"));
@@ -279,7 +314,7 @@ public class ServerCaller {
         HttpPost post = new HttpPost(uri.toString());
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
         post.setEntity(formEntity);
-        HttpResponse response = httpClient.execute(post);
+        HttpResponse response = httpClient.execute(post, httpContext);
         HttpEntity entity = response.getEntity();
         if (entity != null) {
             entity.consumeContent();
@@ -287,7 +322,7 @@ public class ServerCaller {
     }
 
     private String executeRequest(HttpUriRequest request) throws IOException {
-        HttpResponse response = httpClient.execute(request);
+        HttpResponse response = httpClient.execute(request, httpContext);
         String entity = EntityUtils.toString(response.getEntity());
         return entity;
     }

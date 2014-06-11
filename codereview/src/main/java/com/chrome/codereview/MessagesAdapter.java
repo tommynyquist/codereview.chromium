@@ -1,6 +1,7 @@
 package com.chrome.codereview;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -67,7 +68,7 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             rest = rest.substring((foundPatchSet.id() + "").length() + 1);
             for (PatchSetFile file: foundPatchSet.files()) {
                 if (rest.startsWith(file.path())) {
-                    DiffActivity.startDiffActivity(activity, IssueDetailsFragment.REQUEST_CODE_DIFF, issueId, foundPatchSet.id(), file);
+                    DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issueId, foundPatchSet.id(), file);
                     return;
                 }
             }
@@ -76,14 +77,16 @@ public class MessagesAdapter extends LinearExpandableAdapter {
     }
 
     private LayoutInflater inflater;
-    private Activity activity;
+    private Fragment fragment;
     private int issueId;
     private Issue issue;
+    private Activity activity;
     private List<Message> messages = new ArrayList<Message>();
 
-    public MessagesAdapter(Activity activity, int issueId) {
+    public MessagesAdapter(Fragment fragment, int issueId) {
         this.issueId = issueId;
-        this.activity = activity;
+        this.fragment = fragment;
+        this.activity = fragment.getActivity();
         inflater = LayoutInflater.from(activity);
     }
 

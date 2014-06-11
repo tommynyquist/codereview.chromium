@@ -1,7 +1,6 @@
 package com.chrome.codereview;
 
-import android.app.Activity;
-import android.content.Context;
+import android.app.Fragment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,13 +53,13 @@ class IssueDetailsAdapter extends MergeExpandableListAdapter {
     private MessagesAdapter messagesAdapter;
     private DescriptionAdapter descriptionAdapter;
 
-    public IssueDetailsAdapter(Activity activity, int issueId) {
+    public IssueDetailsAdapter(Fragment fragment, int issueId) {
         super();
         descriptionAdapter = new DescriptionAdapter();
         add(new HeadedExpandableListAdapter(descriptionAdapter, R.layout.list_group_header, R.string.description));
-        patchSetsAdapter = new PatchSetsAdapter(activity);
+        patchSetsAdapter = new PatchSetsAdapter(fragment.getActivity());
         add(new HeadedExpandableListAdapter(patchSetsAdapter, R.layout.list_group_header, R.string.patchsets));
-        messagesAdapter = new MessagesAdapter(activity, issueId);
+        messagesAdapter = new MessagesAdapter(fragment, issueId);
         add(new HeadedExpandableListAdapter(messagesAdapter, R.layout.list_group_header, R.string.messages));
     }
 
