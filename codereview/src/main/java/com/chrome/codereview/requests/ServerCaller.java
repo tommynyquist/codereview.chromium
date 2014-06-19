@@ -29,7 +29,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.client.CookieStore;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -37,7 +36,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
@@ -67,6 +65,7 @@ public class ServerCaller {
         NEEDS_ACCOUNT,
         NEEDS_AUTHORIZATION;
     }
+
     public static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
     public static final Uri SECONDARY_URL = Uri.parse("https://chromiumcodereview.appspot.com");
 
@@ -86,15 +85,18 @@ public class ServerCaller {
     private static final String ISSUE_PATH = "issue";
     private static final Uri DOWNLOAD_DIFF = BASE_URL.buildUpon().appendPath("download").build();
     private static final String COMMIT_PATH = "edit_flags";
+    private static final int N_THREADS = 3;
 
     private final AndroidHttpClient httpClient;
     private final BasicHttpContext httpContext;
+    private final ExecutorService service;
     private Account chromiumAccount;
     private State state;
     private Context context;
 
     public ServerCaller(Context context) {
         this.context = context;
+        service = Executors.newFixedThreadPool(N_THREADS);
         httpClient = AndroidHttpClient.newInstance("");
         httpContext = new BasicHttpContext();
         httpContext.setAttribute(ClientContext.COOKIE_STORE, new PersistentCookieStore(context));
@@ -136,7 +138,6 @@ public class ServerCaller {
         if (accountName == null) {
             return null;
         }
-        ExecutorService service = Executors.newFixedThreadPool(3);
         Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).withMessages().create()));
         Future<List<Issue>> futureCcIssues = service.submit(createSearchCallable(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
         Future<List<Issue>> futureOnReviewIssues = service.submit(createSearchCallable(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
@@ -245,14 +246,25 @@ public class ServerCaller {
         return null;
     }
 
-    public Issue loadIssueWithPatchSetData(int issueId) {
+    public Issue loadIssueWithPatchSetData(final int issueId) {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendQueryParameter("messages", "true").build();
         try {
             JSONObject jsonObject = executeGetJSONRequest(uri);
             JSONArray patchSetsJson = jsonObject.getJSONArray("patchsets");
-            List<PatchSet> patchSets = new ArrayList<PatchSet>();
+            List<Future<PatchSet>> futures = new ArrayList<Future<PatchSet>>(patchSetsJson.length());
             for (int i = 0; i < patchSetsJson.length(); i++) {
-                PatchSet patchSet = loadPatchSet(issueId, patchSetsJson.getInt(i));
+                final int patchSetId = patchSetsJson.getInt(i);
+                futures.add(service.submit(new Callable<PatchSet>() {
+                    @Override
+                    public PatchSet call() throws Exception {
+                        return loadPatchSet(issueId, patchSetId);
+                    }
+                }));
+            }
+
+            List<PatchSet> patchSets = new ArrayList<PatchSet>();
+            for (Future<PatchSet> future: futures) {
+                PatchSet patchSet = future.get();
                 if (patchSet != null) {
                     patchSets.add(patchSet);
                 }

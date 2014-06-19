@@ -129,7 +129,7 @@ public class Comment implements Parcelable {
 
     public static String quote(Comment comment) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        String header = "On " + format.format(comment.date()) + ", " + comment.author() + "wrote:\n";
+        String header = "On " + format.format(comment.date()) + ", " + comment.author() + " wrote:\n";
         StringBuilder builder = new StringBuilder(header);
         StringTokenizer tokenizer = new StringTokenizer(comment.text(), "\n");
         while (tokenizer.hasMoreTokens()) {
