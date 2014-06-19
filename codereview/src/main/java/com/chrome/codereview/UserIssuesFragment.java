@@ -64,10 +64,14 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View layout = super.onCreateView(inflater, container, savedInstanceState);
         issuesAdapter = new UserIssuesAdapter(getActivity());
-        getLoaderManager().initLoader(0, new Bundle(), this);
+        View layout = super.onCreateView(inflater, container, savedInstanceState);
         return layout;
+    }
+
+    @Override
+    protected void refresh() {
+        getLoaderManager().restartLoader(0, new Bundle(), UserIssuesFragment.this);
     }
 
     @Override

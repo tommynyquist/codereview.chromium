@@ -306,6 +306,7 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
 
         @Override
         public Loader<FileDiff> onCreateLoader(int id, Bundle args) {
+            startProgress();
             return new DiffLoader(getActivity(), issueId, patchSetId, patchId);
         }
 
@@ -336,7 +337,7 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
 
         @Override
         public void onLoadFinished(Loader<Void> loader, Void data) {
-            getLoaderManager().restartLoader(PATCH_SET_LOADER_ID, new Bundle(), DiffFragment.this.patchSetLoaderCallback);
+            refresh();
             getActivity().setResult(RESULT_REFRESH);
         }
 
@@ -380,15 +381,19 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = super.onCreateView(inflater, container, savedInstanceState);
-        startProgress();
         Intent intent = getActivity().getIntent();
         comments = intent.getParcelableArrayListExtra(COMMENTS_EXTRA);
         issueId = intent.getIntExtra(ISSUE_ID_EXTRA, -1);
         patchSetId = intent.getIntExtra(PATCH_SET_ID_EXTRA, -1);
         patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
+        View layout = super.onCreateView(inflater, container, savedInstanceState, false);
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
-        return view;
+        return layout;
+    }
+
+    @Override
+    protected void refresh() {
+        getLoaderManager().restartLoader(PATCH_SET_LOADER_ID, new Bundle(), DiffFragment.this.patchSetLoaderCallback);
     }
 
     @Override

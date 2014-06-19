@@ -6,30 +6,55 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
+import com.chrome.codereview.R;
+
+import uk.co.senab.actionbarpulltorefresh.library.ActionBarPullToRefresh;
+import uk.co.senab.actionbarpulltorefresh.library.Options;
+import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
+import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
 
 /**
  * Created by sergeyv on 4/6/14.
  */
 public abstract class BaseListFragment extends ListFragment {
 
-    private SmoothProgressBar progress;
+    private PullToRefreshLayout pullToRefreshLayout;
 
     protected abstract int getLayoutRes();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return this.onCreateView(inflater, container, savedInstanceState, true);
+    }
+
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState, boolean refresh) {
         View layout = inflater.inflate(getLayoutRes(), container, false);
-        progress = (SmoothProgressBar) layout.findViewById(android.R.id.progress);
+
+        pullToRefreshLayout = (PullToRefreshLayout) layout.findViewById(R.id.ptr_layout);
+        ActionBarPullToRefresh.SetupWizard setupWizard = ActionBarPullToRefresh.from(getActivity());
+        setupWizard.allChildrenArePullable();
+        setupWizard.listener(new OnRefreshListener() {
+            @Override
+            public void onRefreshStarted(View view) {
+                refresh();
+            }
+        });
+
+        setupWizard.setup(pullToRefreshLayout);
+        setupWizard.options(Options.create().scrollDistance(0.75f).build());
+        if (refresh) {
+            refresh();
+        }
         return layout;
     }
 
+    protected abstract void refresh();
+
     protected void startProgress() {
-        progress.setIndeterminate(true);
-        progress.progressiveStart();
+        pullToRefreshLayout.setRefreshing(true);
     }
 
     protected void stopProgress() {
-        progress.progressiveStop();
+        pullToRefreshLayout.setRefreshComplete();
     }
 }

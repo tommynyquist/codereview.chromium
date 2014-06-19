@@ -207,8 +207,12 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         ExpandableListView listView = (ExpandableListView) layout.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
         listView.setAdapter(issueDetailsAdapter);
-        getLoaderManager().initLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
         return layout;
+    }
+
+    @Override
+    protected void refresh() {
+        getLoaderManager().restartLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
     }
 
     @Override

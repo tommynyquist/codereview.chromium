@@ -3,6 +3,7 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <item name="android:actionBarStyle">@style/ProgressBarActionBar</item>
+        <item name="ptrHeaderStyle">@style/Widget.Custom.PtrHeader</item>
     </style>
 
     <style name="ProgressBarActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
@@ -19,7 +20,6 @@
     </style>
 
     <style name="DefaultProgressBar" parent="SmoothProgressBar">
-        <item name="android:id">@android:id/progress</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/half_pace</item>
         <item name="android:indeterminate">true</item>
@@ -30,5 +30,12 @@
         <item name="spb_colors">@array/shades1</item>
         <item name="spb_gradients">true</item>
     </style>
+
+
+    <style name="Widget.Custom.PtrHeader" parent="android:Widget">
+        <item name="ptrProgressBarColor">@color/blue_2</item>
+        <item name="ptrSmoothProgressBarStyle">@style/DefaultProgressBar</item>
+    </style>
+
 
 </resources>
