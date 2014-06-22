@@ -12,7 +12,6 @@ import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.utils.ViewUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,33 +19,10 @@ public class UnifiedDiffAdapter extends DiffAdapter implements AdapterView.OnIte
 
     public static final int LINE_TYPE = 0;
     public static final int COMMENT_TYPE = 1;
-    private final List<Object> linesWithComments;
 
     public UnifiedDiffAdapter(Context context, FileDiff fileDiff, List<Comment> comments) {
         super(context, fileDiff, comments);
-        linesWithComments = new ArrayList<Object>(diffLines.size() + comments.size());
         resetComments(comments);
-    }
-
-    private void addAll(List<Object> main, List<Comment> add) {
-        if (add != null) {
-            main.addAll(add);
-        }
-    }
-
-    @Override
-    public int getCount() {
-        return linesWithComments.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return linesWithComments.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
     }
 
     @Override
@@ -101,8 +77,6 @@ public class UnifiedDiffAdapter extends DiffAdapter implements AdapterView.OnIte
 
     @Override
     protected void rebuildWithComments(HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComments) {
-        linesWithComments.clear();
-
         for (FileDiff.DiffLine diffLine : diffLines) {
             linesWithComments.add(diffLine);
             switch (diffLine.type()) {
@@ -120,8 +94,6 @@ public class UnifiedDiffAdapter extends DiffAdapter implements AdapterView.OnIte
                     break;
             }
         }
-
-        notifyDataSetChanged();
     }
 
     @Override
@@ -136,6 +108,12 @@ public class UnifiedDiffAdapter extends DiffAdapter implements AdapterView.OnIte
         }
         int line = diffLine.type() == FileDiff.LineType.LEFT ? diffLine.leftLineNumber() : diffLine.rightLineNumber();
         commentActionListener.writeComment(line, diffLine.type() == FileDiff.LineType.LEFT);
+    }
+
+    private static void addAll(List<Object> main, List<Comment> add) {
+        if (add != null) {
+            main.addAll(add);
+        }
     }
 
 }

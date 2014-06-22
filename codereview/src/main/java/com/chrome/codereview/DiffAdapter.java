@@ -36,6 +36,7 @@ public abstract class DiffAdapter extends BaseAdapter implements AdapterView.OnI
     }
 
     protected final List<FileDiff.DiffLine> diffLines;
+    protected final List<Object> linesWithComments = new ArrayList<Object>();
     protected final LayoutInflater inflater;
     protected final Context context;
     protected CommentActionListener commentActionListener;
@@ -57,7 +58,9 @@ public abstract class DiffAdapter extends BaseAdapter implements AdapterView.OnI
             }
             lineToComment.get(key).add(comment);
         }
+        linesWithComments.clear();
         rebuildWithComments(lineToComment);
+        notifyDataSetChanged();
     }
 
     public void setCommentActionListener(CommentActionListener commentActionListener) {
@@ -107,4 +110,20 @@ public abstract class DiffAdapter extends BaseAdapter implements AdapterView.OnI
             commentActionListener.replyComment(comment);
         }
     }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public int getCount() {
+        return linesWithComments.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return linesWithComments.get(position);
+    }
+
 }

@@ -54,12 +54,9 @@ public class SideBySideDiffAdapter extends DiffAdapter {
     }
 
     private final List<Object> mergedDiffLines;
-    private List<Object> linesWithComments = new ArrayList<Object>();
-    private final LayoutInflater inflater;
 
     public SideBySideDiffAdapter(Context context, FileDiff diff, List<Comment> comments) {
         super(context, diff, comments);
-        inflater = LayoutInflater.from(context);
         mergedDiffLines = new ArrayList<Object>(diff.content().size());
         LinkedList<Content> left = new LinkedList<Content>();
         for (FileDiff.DiffLine diffLine : diff.content()) {
@@ -95,21 +92,6 @@ public class SideBySideDiffAdapter extends DiffAdapter {
             }
         }
         resetComments(comments);
-    }
-
-    @Override
-    public int getCount() {
-        return linesWithComments.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return null;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
     }
 
     @Override
@@ -189,18 +171,14 @@ public class SideBySideDiffAdapter extends DiffAdapter {
 
     @Override
     protected void rebuildWithComments(HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComments) {
-
-        linesWithComments.clear();
         for (Object object : mergedDiffLines) {
             linesWithComments.add(object);
             if (object instanceof SkippingLine) {
                 continue;
             }
             Content content = (Content) object;
-            List<Comment> leftComments = lineToComments.get(new Pair<Integer, Boolean>(content.leftLineNumber, true));
-            List<Comment> rightComments = lineToComments.get(new Pair<Integer, Boolean>(content.rightLineNumber, false));
-            Iterator<Comment> leftIterator = leftComments != null ? leftComments.iterator() : Collections.<Comment>emptyListIterator();
-            Iterator<Comment> rightIterator = rightComments != null ? rightComments.iterator() : Collections.<Comment>emptyListIterator();
+            Iterator<Comment> leftIterator = iteratorFor(lineToComments, content.leftLineNumber, true);
+            Iterator<Comment> rightIterator = iteratorFor(lineToComments, content.rightLineNumber, false);
 
             while (leftIterator.hasNext() || rightIterator.hasNext()) {
                 Comment leftComment = leftIterator.hasNext() ? leftIterator.next() : null;
@@ -211,7 +189,6 @@ public class SideBySideDiffAdapter extends DiffAdapter {
                 linesWithComments.add(commentPair);
             }
         }
-        notifyDataSetChanged();
     }
 
     @Override
@@ -223,4 +200,10 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         }
         super.onClick(v);
     }
+
+    private static Iterator<Comment> iteratorFor(HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComments, int lineNumber, boolean left) {
+        List<Comment> leftComments = lineToComments.get(new Pair<Integer, Boolean>(lineNumber, left));
+        return leftComments != null ? leftComments.iterator() : Collections.<Comment>emptyList().iterator();
+    }
+
 }
