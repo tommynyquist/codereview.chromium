@@ -22,6 +22,10 @@ import com.chrome.codereview.utils.CachedLoader;
  */
 public class UserIssuesFragment extends BaseListFragment implements LoaderManager.LoaderCallbacks<UserIssues> {
 
+    public interface IssueSelectionListener {
+        void onIssueSelected(Issue issue);
+    }
+
     private static class IssuesLoader extends CachedLoader<UserIssues> {
 
         private final String userName;
@@ -38,6 +42,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
     }
 
     private UserIssuesAdapter issuesAdapter;
+    private IssueSelectionListener selectionListener;
 
     @Override
     public Loader<UserIssues> onCreateLoader(int i, Bundle bundle) {
@@ -77,11 +82,12 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         Issue issue = issuesAdapter.getItem(position);
-        if (issue == null) {
-            return;
+        if (issue != null && selectionListener != null) {
+            selectionListener.onIssueSelected(issue);
         }
-        Intent intent = new Intent(getActivity(), IssueDetailActivity.class);
-        intent.putExtra(IssueDetailsFragment.EXTRA_ISSUE_ID, issue.id());
-        startActivity(intent);
+    }
+
+    public void setIssueSelectionListener(IssueSelectionListener selectionListener) {
+        this.selectionListener = selectionListener;
     }
 }

@@ -43,8 +43,8 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             }
             String url = getURL();
             String rest = "";
-            String prefix1 = ServerCaller.BASE_URL.buildUpon().appendPath(issueId + "").appendPath("diff").toString();
-            String prefix2 = ServerCaller.SECONDARY_URL.buildUpon().appendPath(issueId + "").appendPath("diff").toString();
+            String prefix1 = ServerCaller.BASE_URL.buildUpon().appendPath(issue.id() + "").appendPath("diff").toString();
+            String prefix2 = ServerCaller.SECONDARY_URL.buildUpon().appendPath(issue.id() + "").appendPath("diff").toString();
             if (url.startsWith(prefix1)) {
                 rest = url.substring(prefix1.length() + 1);
             } else if (url.startsWith(prefix2)) {
@@ -68,7 +68,7 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             rest = rest.substring((foundPatchSet.id() + "").length() + 1);
             for (PatchSetFile file: foundPatchSet.files()) {
                 if (rest.startsWith(file.path())) {
-                    DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issueId, foundPatchSet.id(), file);
+                    DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issue.id(), foundPatchSet.id(), file);
                     return;
                 }
             }
@@ -78,13 +78,11 @@ public class MessagesAdapter extends LinearExpandableAdapter {
 
     private LayoutInflater inflater;
     private Fragment fragment;
-    private int issueId;
     private Issue issue;
     private Activity activity;
     private List<Message> messages = new ArrayList<Message>();
 
-    public MessagesAdapter(Fragment fragment, int issueId) {
-        this.issueId = issueId;
+    public MessagesAdapter(Fragment fragment) {
         this.fragment = fragment;
         this.activity = fragment.getActivity();
         inflater = LayoutInflater.from(activity);

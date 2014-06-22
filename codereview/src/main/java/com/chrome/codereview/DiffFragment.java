@@ -7,33 +7,27 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
 
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
+import com.chrome.codereview.phone.UnifiedDiffAdapter;
+import com.chrome.codereview.tablet.SideBySideDiffAdapter;
 import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
-import com.chrome.codereview.utils.DateUtils;
-import com.chrome.codereview.utils.ViewUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by sergeyv on 29/4/14.
  */
-public class DiffFragment extends BaseListFragment implements AdapterView.OnItemClickListener {
+public class DiffFragment extends BaseListFragment implements DiffAdapter.CommentActionListener {
 
     public static final int RESULT_REFRESH = 10;
     public static final String COMMENTS_EXTRA = "COMMENTS_EXTRA";
@@ -113,162 +107,6 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
         }
     }
 
-    private class DiffAdapter extends BaseAdapter implements View.OnClickListener {
-
-        public static final int LINE_TYPE = 0;
-        public static final int COMMENT_TYPE = 1;
-        private final List<Object> linesWithComments;
-        private final List<FileDiff.DiffLine> diffs;
-        private final LayoutInflater inflater;
-        private final Context context;
-
-        public DiffAdapter(Context context, List<FileDiff.DiffLine> diffs, List<Comment> comments) {
-            this.context = context;
-            inflater = LayoutInflater.from(context);
-            this.diffs = diffs;
-            linesWithComments = new ArrayList<Object>(diffs.size() + comments.size());
-            resetComments(comments);
-        }
-
-        private void addAll(List<Object> main, List<Comment> add) {
-            if (add != null) {
-                main.addAll(add);
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return linesWithComments.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return linesWithComments.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return 2;
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return linesWithComments.get(position) instanceof FileDiff.DiffLine ? LINE_TYPE : COMMENT_TYPE;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (getItemViewType(position) == LINE_TYPE) {
-                return getDiffLineView((FileDiff.DiffLine) getItem(position), convertView, parent);
-            }
-            return getCommentView((Comment) getItem(position), convertView, parent);
-        }
-
-        public View getCommentView(Comment comment, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.comment_item, parent, false);
-            }
-            if (comment.isDraft()) {
-                ViewUtils.setText(convertView, R.id.author, context.getString(R.string.draft_author));
-            } else {
-                ViewUtils.setText(convertView, R.id.author, comment.author());
-            }
-            ViewUtils.setText(convertView, R.id.comment_text, comment.text());
-            ViewUtils.setText(convertView, R.id.date, DateUtils.createAgoText(context, comment.date()));
-            initImageButton(convertView, R.id.img1, R.drawable.ic_action_reply, R.drawable.ic_action_edit, comment);
-            initImageButton(convertView, R.id.img2, R.drawable.ic_action_accept, R.drawable.ic_action_remove, comment);
-            return convertView;
-        }
-
-        private void initImageButton(View convertView, int buttonRes, int mainDrawableRes, int draftDrawableRes, Comment comment) {
-            ImageButton image = (ImageButton) convertView.findViewById(buttonRes);
-            if (comment.isDraft()) {
-                image.setImageResource(draftDrawableRes);
-            } else {
-                image.setImageResource(mainDrawableRes);
-            }
-            image.setOnClickListener(this);
-            image.setTag(comment);
-        }
-
-        public View getDiffLineView(FileDiff.DiffLine line, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.diff_line, parent, false);
-            }
-
-            int color;
-            switch (line.type()) {
-                case LEFT:
-                    color = R.color.diff_remove;
-                    break;
-                case RIGHT:
-                    color = R.color.diff_add;
-                    break;
-                case MARKER:
-                    color = R.color.diff_marker_bg;
-                    break;
-                default:
-                    color = R.color.diff_default_background;
-            }
-            convertView.setBackgroundColor(context.getResources().getColor(color));
-            ViewUtils.setText(convertView, android.R.id.text1, line.text());
-            return convertView;
-        }
-
-        @Override
-        public void onClick(View v) {
-            Comment comment = (Comment) v.getTag();
-            if (v.getId() == R.id.img2) {
-                String text = comment.isDraft() ? "" : Comment.quote(comment) + "\nDone.";
-                String messageId = comment.isDraft() ? comment.messageId() : "";
-                restartInlineDraftLoader(Comment.createDraft(text, comment.line(), comment.left(), messageId));
-                return;
-            }
-
-            String messageId = comment.isDraft() ? comment.messageId() : "";
-            String text = comment.isDraft() ? comment.text() : Comment.quote(comment);
-            showWriteCommentDialog(text, messageId, comment.line(), comment.left());
-        }
-
-        void resetComments(List<Comment> comments) {
-            HashMap<Pair<Integer, Boolean>, List<Comment>> lineToComment = new HashMap<Pair<Integer, Boolean>, List<Comment>>();
-            for (Comment comment : comments) {
-                Pair<Integer, Boolean> key = new Pair<Integer, Boolean>(comment.line(), comment.left());
-                if (!lineToComment.containsKey(key)) {
-                    lineToComment.put(key, new ArrayList<Comment>());
-                }
-                lineToComment.get(key).add(comment);
-            }
-            linesWithComments.clear();
-
-            for (FileDiff.DiffLine diffLine : diffs) {
-                linesWithComments.add(diffLine);
-                switch (diffLine.type()) {
-                    case MARKER:
-                        break;
-                    case BOTH_SIDE:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
-                        break;
-                    case RIGHT:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.rightLineNumber(), false)));
-                        break;
-                    case LEFT:
-                        addAll(linesWithComments, lineToComment.get(new Pair<Integer, Boolean>(diffLine.leftLineNumber(), true)));
-                        break;
-                }
-            }
-
-            notifyDataSetChanged();
-        }
-
-    }
-
     private class InlineDraftDialogListener implements DialogInterface.OnClickListener {
 
         private final int line;
@@ -316,9 +154,11 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
             if (data == null) {
                 return;
             }
-            diffAdapter = new DiffAdapter(getActivity(), data.content(), comments);
+            boolean useSideBySideDiff = getResources().getBoolean(R.bool.use_side_by_side_diff);
+            diffAdapter = useSideBySideDiff ? new SideBySideDiffAdapter(getActivity(), data, comments) : new UnifiedDiffAdapter(getActivity(), data, comments);
+            diffAdapter.setCommentActionListener(DiffFragment.this);
             setListAdapter(diffAdapter);
-            getListView().setOnItemClickListener(DiffFragment.this);
+            getListView().setOnItemClickListener(diffAdapter);
         }
 
         @Override
@@ -396,20 +236,6 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
         getLoaderManager().restartLoader(PATCH_SET_LOADER_ID, new Bundle(), DiffFragment.this.patchSetLoaderCallback);
     }
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (diffAdapter.getItemViewType(position) != DiffAdapter.LINE_TYPE) {
-            return;
-        }
-
-        FileDiff.DiffLine diffLine = (FileDiff.DiffLine) diffAdapter.getItem(position);
-        if (diffLine.type() == FileDiff.LineType.MARKER) {
-            return;
-        }
-        int line = diffLine.type() == FileDiff.LineType.LEFT ? diffLine.leftLineNumber() : diffLine.rightLineNumber();
-        showWriteCommentDialog("", "", line, diffLine.type() == FileDiff.LineType.LEFT);
-    }
-
     private void showWriteCommentDialog(String text, String messageId, int line, boolean left) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.new_comment);
@@ -420,5 +246,32 @@ public class DiffFragment extends BaseListFragment implements AdapterView.OnItem
         builder.setPositiveButton(android.R.string.ok, new InlineDraftDialogListener(editText, messageId, line, left));
         builder.create().show();
     }
+
+    @Override
+    public void removeDraft(Comment comment) {
+        restartInlineDraftLoader(Comment.createDraft("", comment.line(), comment.left(), comment.messageId()));
+    }
+
+    @Override
+    public void editDraft(Comment comment) {
+        showWriteCommentDialog(comment.text(), comment.messageId(), comment.line(), comment.left());
+    }
+
+    @Override
+    public void doneComment(Comment comment) {
+        restartInlineDraftLoader(Comment.createDraft(Comment.quote(comment) + "\nDone.", comment.line(), comment.left(), ""));
+    }
+
+    @Override
+    public void replyComment(Comment comment) {
+        showWriteCommentDialog(Comment.quote(comment), "", comment.line(), comment.left());
+    }
+
+    @Override
+    public void writeComment(int line, boolean left) {
+        showWriteCommentDialog("", "", line, left);
+    }
+
+
 
 }

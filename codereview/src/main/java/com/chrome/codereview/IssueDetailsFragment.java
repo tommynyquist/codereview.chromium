@@ -198,21 +198,27 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         issueId = getActivity().getIntent().getIntExtra(EXTRA_ISSUE_ID, -1);
-        if (issueId == -1) {
-            throw new IllegalStateException("EXTRA_ISSUE_ID wasn't found in intent");
-        }
-        getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
-        issueDetailsAdapter = new IssueDetailsAdapter(this, issueId);
+        issueDetailsAdapter = new IssueDetailsAdapter(this);
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         ExpandableListView listView = (ExpandableListView) layout.findViewById(android.R.id.list);
         listView.setOnChildClickListener(this);
         listView.setAdapter(issueDetailsAdapter);
+        if (issueId != -1) {
+            getActivity().getActionBar().setTitle(getString(R.string.issue) + " " + issueId);
+        }
         return layout;
+    }
+
+    public void setIssueId(int issueId) {
+        this.issueId = issueId;
+        refresh();
     }
 
     @Override
     protected void refresh() {
-        getLoaderManager().restartLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
+        if (issueId != -1) {
+            getLoaderManager().restartLoader(ISSUE_LOADER_ID, new Bundle(), this.issueLoaderCallback);
+        }
     }
 
     @Override

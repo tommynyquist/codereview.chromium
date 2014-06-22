@@ -2,15 +2,36 @@ package com.chrome.codereview;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.TypedArray;
 import android.os.Bundle;
 
+import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.phone.IssueDetailActivity;
 import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.EmailUtils;
 
 public class UserIssuesActivity extends Activity {
 
     private static final int REQUEST_LOGIN = 1;
+
+    private class PhoneIssueSelectionListener implements UserIssuesFragment.IssueSelectionListener {
+
+        @Override
+        public void onIssueSelected(Issue issue) {
+            Intent intent = new Intent(UserIssuesActivity.this, IssueDetailActivity.class);
+            intent.putExtra(IssueDetailsFragment.EXTRA_ISSUE_ID, issue.id());
+            startActivity(intent);
+        }
+    }
+
+    private class TabletIssueSelectionListener implements UserIssuesFragment.IssueSelectionListener {
+
+        @Override
+        public void onIssueSelected(Issue issue) {
+            issueDetailsFragment.setIssueId(issue.id());
+        }
+    }
+
+    private IssueDetailsFragment issueDetailsFragment;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -35,6 +56,9 @@ public class UserIssuesActivity extends Activity {
     private void initializeViews(ServerCaller serverCaller) {
         getActionBar().setTitle(getString(R.string.issues_title, EmailUtils.retrieveAccountName(serverCaller.getAccountName())));
         setContentView(R.layout.activity_issue_list);
+        UserIssuesFragment userIssuesFragment = (UserIssuesFragment) getFragmentManager().findFragmentById(R.id.issue_list);
+        issueDetailsFragment = (IssueDetailsFragment) getFragmentManager().findFragmentById(R.id.issue_details);
+        userIssuesFragment.setIssueSelectionListener(issueDetailsFragment == null ? new PhoneIssueSelectionListener() : new TabletIssueSelectionListener());
     }
 
 }

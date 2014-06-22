@@ -53,13 +53,13 @@ class IssueDetailsAdapter extends MergeExpandableListAdapter {
     private MessagesAdapter messagesAdapter;
     private DescriptionAdapter descriptionAdapter;
 
-    public IssueDetailsAdapter(Fragment fragment, int issueId) {
+    public IssueDetailsAdapter(Fragment fragment) {
         super();
         descriptionAdapter = new DescriptionAdapter();
         add(new HeadedExpandableListAdapter(descriptionAdapter, R.layout.list_group_header, R.string.description));
         patchSetsAdapter = new PatchSetsAdapter(fragment.getActivity());
         add(new HeadedExpandableListAdapter(patchSetsAdapter, R.layout.list_group_header, R.string.patchsets));
-        messagesAdapter = new MessagesAdapter(fragment, issueId);
+        messagesAdapter = new MessagesAdapter(fragment);
         add(new HeadedExpandableListAdapter(messagesAdapter, R.layout.list_group_header, R.string.messages));
     }
 
