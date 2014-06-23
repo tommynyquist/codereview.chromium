@@ -254,7 +254,11 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         }
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
-        DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
+        if (file != null) {
+            DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
+        } else {
+            showTryBotResultsDialog(patchSet);
+        }
         return true;
     }
 
@@ -275,6 +279,13 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         builder.setNegativeButton(android.R.string.cancel, null);
         publishDialog = builder.create();
         publishDialog.show();
+    }
+
+    public void showTryBotResultsDialog(PatchSet patchSet) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setAdapter(new TryBotsResultsAdapter(getActivity(), patchSet), null);
+        builder.setTitle(getActivity().getString(R.string.try_bots_dialog_title));
+        builder.create().show();
     }
 
     @Override

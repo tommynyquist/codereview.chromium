@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
+import com.chrome.codereview.model.TryBotResult;
 import com.chrome.codereview.utils.BaseIDExpandableAdapter;
 import com.chrome.codereview.utils.ViewUtils;
 
@@ -22,6 +23,9 @@ import java.util.List;
  * Created by sergeyv on 29/5/14.
  */
 public class PatchSetsAdapter extends BaseIDExpandableAdapter {
+
+    private static final int TYPE_PATCH_SET = 0;
+    private static final int TYPE_BOT_RESULTS = 1;
 
     private List<PatchSet> patchsets = new ArrayList<PatchSet>();
     private LayoutInflater inflater;
@@ -43,7 +47,8 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return patchsets.get(groupPosition).files().size();
+        PatchSet patchSet = getGroup(groupPosition);
+        return patchSet.files().size() + (patchSet.hasTryBotsResults() ? 1 : 0);
     }
 
     @Override
@@ -52,8 +57,20 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
     }
 
     @Override
+    public int getChildTypeCount() {
+        return 2;
+    }
+
+    @Override
+    public int getChildType(int groupPosition, int childPosition) {
+        PatchSet patchSet = getGroup(groupPosition);
+        return patchSet.files().size() == childPosition ? TYPE_BOT_RESULTS : TYPE_PATCH_SET;
+    }
+
+    @Override
     public PatchSetFile getChild(int groupPosition, int childPosition) {
-        return patchsets.get(groupPosition).files().get(childPosition);
+        int childType = getChildType(groupPosition, childPosition);
+        return childType == TYPE_PATCH_SET ? patchsets.get(groupPosition).files().get(childPosition) : null;
     }
 
     @Override
@@ -73,8 +90,7 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
         return convertView;
     }
 
-    @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+    private View getPatchSetFileView(int groupPosition, int childPosition, View convertView, ViewGroup parent) {
         PatchSetFile patchSetFile = getChild(groupPosition, childPosition);
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.patchset_file_item, parent, false);
@@ -82,6 +98,34 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
         ViewUtils.setText(convertView, R.id.file_name, patchSetFile.path());
         fillFileStatusView((TextView) convertView.findViewById(R.id.file_status), patchSetFile.status());
         fillStatsView(convertView, patchSetFile.numAdded(), patchSetFile.numRemoved(), patchSetFile.numberOfComments(), patchSetFile.numberOfDrafts());
+        return convertView;
+    }
+
+    private View getTryBotResultsView(int groupPosition, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.try_bot_results_item, parent, false);
+        }
+        PatchSet patchSet = getGroup(groupPosition);
+        String resultsString = getTryBotResultsString(patchSet.tryBotResults(), TryBotResult.Result.FAILURE);
+
+        if (resultsString == null) {
+            resultsString = getTryBotResultsString(patchSet.tryBotResults(), TryBotResult.Result.RUNNING);
+        }
+
+        if (resultsString == null) {
+            resultsString = "Succeed on all bots";
+        }
+        ViewUtils.setText(convertView, R.id.try_bot_results, resultsString);
+        return convertView;
+    }
+
+    @Override
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+        if (getChildType(groupPosition, childPosition) == TYPE_PATCH_SET) {
+            convertView = getPatchSetFileView(groupPosition, childPosition, convertView, parent);
+        } else {
+            convertView = getTryBotResultsView(groupPosition, convertView, parent);
+        }
         convertView.findViewById(R.id.list_divider).setVisibility(isLastChild ? View.INVISIBLE : View.VISIBLE);
         convertView.setBackgroundResource(isLastChild ? R.drawable.patchset_file_bg_last : R.drawable.patchset_file_bg);
         return convertView;
@@ -145,6 +189,21 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
             builder.setSpan(what2, start, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         }
         return builder;
+    }
+
+    private static List<TryBotResult> findAll(List<TryBotResult> tryBotResults, TryBotResult.Result query) {
+        List<TryBotResult> result = new ArrayList<TryBotResult>();
+        for (TryBotResult r: tryBotResults) {
+            if (r.result() == query) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    private static String getTryBotResultsString(List<TryBotResult> tryBotResults, TryBotResult.Result query) {
+        List<TryBotResult> filtered = findAll(tryBotResults, query);
+        return  filtered.isEmpty() ? null : TextUtils.join(", ", filtered);
     }
 
 }

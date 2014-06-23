@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,10 +18,12 @@ public class PatchSet {
     private final List<PatchSetFile> files;
     private final int numComments;
     private final int patchSetId;
+    private final List<TryBotResult> tryBotResults;
 
-    public PatchSet(String message, List<PatchSetFile> files, int numComments, int patchSetId) {
+    public PatchSet(String message, List<PatchSetFile> files, int numComments, int patchSetId, List<TryBotResult> tryBotResults) {
         this.numComments = numComments;
         this.patchSetId = patchSetId;
+        this.tryBotResults = Collections.unmodifiableList(tryBotResults);
         this.message = message != null ? message : "";
         this.files = files;
     }
@@ -35,7 +38,8 @@ public class PatchSet {
         }
         String message = !jsonObject.isNull("message") ? jsonObject.getString("message") : null;
         int numComments = jsonObject.getInt("num_comments");
-        return new PatchSet(message, files, numComments, patchSetId);
+        List<TryBotResult> tryJobResults = TryBotResult.from(jsonObject.getJSONArray("try_job_results"));
+        return new PatchSet(message, files, numComments, patchSetId, tryJobResults);
     }
 
     public String message() {
@@ -76,5 +80,13 @@ public class PatchSet {
 
     public int id() {
         return patchSetId;
+    }
+
+    public List<TryBotResult> tryBotResults() {
+        return tryBotResults;
+    }
+
+    public boolean hasTryBotsResults() {
+        return !tryBotResults.isEmpty();
     }
 }
