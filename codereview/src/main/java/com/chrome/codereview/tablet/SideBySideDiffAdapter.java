@@ -3,7 +3,6 @@ package com.chrome.codereview.tablet;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -91,6 +90,7 @@ public class SideBySideDiffAdapter extends DiffAdapter {
                     break;
             }
         }
+        mergedDiffLines.addAll(left);
         resetComments(comments);
     }
 
@@ -147,13 +147,14 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         return convertView;
     }
 
-    private void initDiffLines(View convertView, int id, String line, int color, int lineNumber) {
-        View lineView = convertView.findViewById(id);
-        lineView.setBackgroundColor(context.getResources().getColor(color));
-        ViewUtils.setText(convertView, id, line);
-        lineView.setTag(lineNumber);
+    private void initDiffLines(View partView, String line, int color, int lineNumber) {
+        int backgroundColor = lineNumber != NO_LINE_NUMBER ? color : R.color.diff_no_line;
+        partView.setBackgroundColor(context.getResources().getColor(backgroundColor));
+        ViewUtils.setText(partView, R.id.line, line);
+        ViewUtils.setText(partView, R.id.lineNumber, lineNumber != NO_LINE_NUMBER ? lineNumber + "" : "");
+        partView.setTag(lineNumber);
         if (!TextUtils.isEmpty(line)) {
-            lineView.setOnClickListener(this);
+            partView.setOnClickListener(this);
         }
     }
 
@@ -161,11 +162,11 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.side_by_side_diff_item, parent, false);
         }
-        int leftColor = content.isChanged ? R.color.diff_remove : R.color.diff_default_background;
+        int leftColor = content.isChanged  ? R.color.diff_remove : R.color.diff_default_background;
         int rightColor = content.isChanged ? R.color.diff_add : R.color.diff_default_background;
 
-        initDiffLines(convertView, R.id.left, content.left, leftColor, content.leftLineNumber);
-        initDiffLines(convertView, R.id.right, content.right, rightColor, content.rightLineNumber);
+        initDiffLines(convertView.findViewById(R.id.left), content.left, leftColor, content.leftLineNumber);
+        initDiffLines(convertView.findViewById(R.id.right), content.right, rightColor, content.rightLineNumber);
         return convertView;
     }
 

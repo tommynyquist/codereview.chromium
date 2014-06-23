@@ -5,6 +5,6 @@
     style="@style/CodeText"
     android:layout_width="match_parent"
     android:paddingBottom="1dp"
-    android:paddingLeft="15dp"
-    android:paddingRight="10dp"
+    android:paddingLeft="@dimen/pace"
+    android:paddingRight="@dimen/half_pace"
     android:paddingTop="1dp" />

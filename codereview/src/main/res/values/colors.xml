@@ -22,6 +22,7 @@
     <color name="blue_4">#c4d7ed</color>
     <color name="blue_5">#fffff8</color>
 
+    <color name="diff_no_line">#eee</color>
     <integer-array name="shades1">
         <item>@color/blue_1</item>
         <item>@color/blue_2</item>
