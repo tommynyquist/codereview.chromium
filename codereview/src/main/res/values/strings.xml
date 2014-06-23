@@ -44,6 +44,7 @@
     <string name="issues_title">Issues for %s</string>
     <string name="reviewers">Reviewers:</string>
     <string name="fail_to_commit">Can\'t commit before issue was loaded.</string>
+    <string name="skipping_lines">Skipping %s matching lines</string>
 
     <plurals name="year">
         <item quantity="one">year</item>

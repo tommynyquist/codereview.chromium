@@ -41,7 +41,7 @@ public class SideBySideDiffAdapter extends DiffAdapter {
     }
 
     private static class SkippingLine {
-
+        int skippedLines = 0;
     }
 
     private static class Content {
@@ -91,6 +91,34 @@ public class SideBySideDiffAdapter extends DiffAdapter {
             }
         }
         mergedDiffLines.addAll(left);
+        Content previousContent = null;
+        SkippingLine skippingLine = null;
+        for (Object object : mergedDiffLines) {
+            if (object instanceof SkippingLine) {
+                skippingLine = previousContent != null ? (SkippingLine) object : null;
+                continue;
+            }
+            Content content = (Content) object;
+            if (skippingLine != null) {
+                if (content.rightLineNumber != NO_LINE_NUMBER && previousContent.rightLineNumber != NO_LINE_NUMBER) {
+                    skippingLine.skippedLines = content.rightLineNumber - previousContent.rightLineNumber - 1;
+                }
+                if (content.leftLineNumber != NO_LINE_NUMBER && previousContent.leftLineNumber != NO_LINE_NUMBER) {
+                    skippingLine.skippedLines = content.leftLineNumber - previousContent.leftLineNumber - 1;
+                }
+                skippingLine = null;
+            }
+            previousContent = content;
+        }
+        for (Iterator<Object> iterator = mergedDiffLines.iterator(); iterator.hasNext(); ) {
+            Object object = iterator.next();
+            if (object instanceof SkippingLine) {
+                SkippingLine skip = (SkippingLine) object;
+                if (skip.skippedLines == 0) {
+                    iterator.remove();
+                }
+            }
+        }
         resetComments(comments);
     }
 
@@ -117,7 +145,7 @@ public class SideBySideDiffAdapter extends DiffAdapter {
             case TYPE_COMMENTS:
                 return getCommentsView((CommentPair) linesWithComments.get(position), convertView, parent);
             case TYPE_SKIP:
-                return getSkipLinesView(convertView, parent);
+                return getSkipLinesView((SkippingLine) linesWithComments.get(position), convertView, parent);
         }
         throw new IllegalStateException("Unreachable");
     }
@@ -139,11 +167,11 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         return convertView;
     }
 
-    private View getSkipLinesView(View convertView, ViewGroup parent) {
+    private View getSkipLinesView(SkippingLine skippingLine, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
-            ViewUtils.setText(convertView, android.R.id.text1, "skipping lines");
+            convertView = inflater.inflate(R.layout.skipping_line, parent, false);
         }
+        ViewUtils.setText(convertView, android.R.id.text1, context.getString(R.string.skipping_lines, skippingLine.skippedLines));
         return convertView;
     }
 
@@ -162,7 +190,7 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.side_by_side_diff_item, parent, false);
         }
-        int leftColor = content.isChanged  ? R.color.diff_remove : R.color.diff_default_background;
+        int leftColor = content.isChanged ? R.color.diff_remove : R.color.diff_default_background;
         int rightColor = content.isChanged ? R.color.diff_add : R.color.diff_default_background;
 
         initDiffLines(convertView.findViewById(R.id.left), content.left, leftColor, content.leftLineNumber);
