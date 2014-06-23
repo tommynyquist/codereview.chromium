@@ -18,6 +18,7 @@ import com.chrome.codereview.utils.ViewUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by sergeyv on 29/5/14.
@@ -106,10 +107,10 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
             convertView = inflater.inflate(R.layout.try_bot_results_item, parent, false);
         }
         PatchSet patchSet = getGroup(groupPosition);
-        String resultsString = getTryBotResultsString(patchSet.tryBotResults(), TryBotResult.Result.FAILURE);
+        String resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.FAILURE);
 
         if (resultsString == null) {
-            resultsString = getTryBotResultsString(patchSet.tryBotResults(), TryBotResult.Result.RUNNING);
+            resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.RUNNING);
         }
 
         if (resultsString == null) {
@@ -191,18 +192,19 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
         return builder;
     }
 
-    private static List<TryBotResult> findAll(List<TryBotResult> tryBotResults, TryBotResult.Result query) {
-        List<TryBotResult> result = new ArrayList<TryBotResult>();
-        for (TryBotResult r: tryBotResults) {
-            if (r.result() == query) {
-                result.add(r);
+    private static List<String> findAll(Map<String, TryBotResult.Result> botToState, TryBotResult.Result query) {
+        List<String> result = new ArrayList<String>();
+
+        for (String bot: botToState.keySet()) {
+            if (botToState.get(bot) == query) {
+                result.add(bot);
             }
         }
         return result;
     }
 
-    private static String getTryBotResultsString(List<TryBotResult> tryBotResults, TryBotResult.Result query) {
-        List<TryBotResult> filtered = findAll(tryBotResults, query);
+    private static String getTryBotResultsString(Map<String, TryBotResult.Result> botToState, TryBotResult.Result query) {
+        List<String> filtered = findAll(botToState, query);
         return  filtered.isEmpty() ? null : TextUtils.join(", ", filtered);
     }
 
