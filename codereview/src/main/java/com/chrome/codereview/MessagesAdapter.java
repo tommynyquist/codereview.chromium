@@ -149,8 +149,9 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             if (start >= spannableString.length()) {
                 break;
             }
+            System.out.println("mmm " + message.substring(m.start(), m.end()));
             DiffUrlSpan span = new DiffUrlSpan(m.group(0));
-            spannableString.setSpan(span, start, Math.min(end, spannableString.length() - 1), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            spannableString.setSpan(span, start, Math.min(end, spannableString.length()), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         }
         return spannableString;
     }
