@@ -43,6 +43,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     private UserIssuesAdapter issuesAdapter;
     private IssueSelectionListener selectionListener;
+    private boolean selectFirstIssue = false;
 
     @Override
     public Loader<UserIssues> onCreateLoader(int i, Bundle bundle) {
@@ -55,6 +56,20 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         issuesAdapter.setUserIssues(issues);
         stopProgress();
         setListAdapter(issuesAdapter);
+        if (!selectFirstIssue) {
+            return;
+        }
+        selectFirstIssue = true;
+        for (int i = 0; i < issuesAdapter.getCount(); i++) {
+            Issue issue = issuesAdapter.getItem(i);
+            if (issue == null) {
+                continue;
+            }
+            getListView().setSelection(i);
+            if (selectionListener != null) {
+                selectionListener.onIssueSelected(issue);
+            }
+        }
     }
 
     @Override
@@ -85,6 +100,10 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         if (issue != null && selectionListener != null) {
             selectionListener.onIssueSelected(issue);
         }
+    }
+
+    public void selectFirstIssue() {
+        this.selectFirstIssue = true;
     }
 
     public void setIssueSelectionListener(IssueSelectionListener selectionListener) {

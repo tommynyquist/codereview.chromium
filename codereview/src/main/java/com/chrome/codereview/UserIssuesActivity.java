@@ -59,6 +59,9 @@ public class UserIssuesActivity extends Activity {
         UserIssuesFragment userIssuesFragment = (UserIssuesFragment) getFragmentManager().findFragmentById(R.id.issue_list);
         issueDetailsFragment = (IssueDetailsFragment) getFragmentManager().findFragmentById(R.id.issue_details);
         userIssuesFragment.setIssueSelectionListener(issueDetailsFragment == null ? new PhoneIssueSelectionListener() : new TabletIssueSelectionListener());
+        if (issueDetailsFragment != null) {
+            userIssuesFragment.selectFirstIssue();
+        }
     }
 
 }
