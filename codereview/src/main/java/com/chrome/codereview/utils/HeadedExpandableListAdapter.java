@@ -43,4 +43,14 @@ public class HeadedExpandableListAdapter extends MergeExpandableListAdapter {
     public HeadedExpandableListAdapter(BaseExpandableListAdapter mainAdapter, int headerLayout, int headerResText) {
         super(new HeaderAdapter(headerLayout, headerResText), mainAdapter);
     }
+
+    @Override
+    public int getGroupCount() {
+        int count = super.getGroupCount();
+        //Just a header
+        if (count == 1) {
+            return 0;
+        }
+        return count;
+    }
 }
