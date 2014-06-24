@@ -104,19 +104,24 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
 
     private View getTryBotResultsView(int groupPosition, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.try_bot_results_item, parent, false);
+            convertView = inflater.inflate(R.layout.try_bot_results_summary_item, parent, false);
         }
         PatchSet patchSet = getGroup(groupPosition);
-        String resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.FAILURE);
 
+        String resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.FAILURE, context.getString(R.string.try_bots_failure));
+        int textColor = R.color.scheme_red;
         if (resultsString == null) {
-            resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.RUNNING);
+            resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.RUNNING, context.getString(R.string.try_bots_running));
+            textColor = R.color.scheme_blue;
         }
 
         if (resultsString == null) {
-            resultsString = "Succeed on all bots";
+            resultsString = context.getString(R.string.try_bots_success);
+            textColor = R.color.scheme_green;
         }
-        ViewUtils.setText(convertView, R.id.try_bot_results, resultsString);
+        TextView textView = (TextView) convertView.findViewById(R.id.try_bot_results);
+        textView.setText(resultsString);
+        textView.setTextColor(context.getResources().getColor(textColor));
         return convertView;
     }
 
@@ -195,7 +200,7 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
     private static List<String> findAll(Map<String, TryBotResult.Result> botToState, TryBotResult.Result query) {
         List<String> result = new ArrayList<String>();
 
-        for (String bot: botToState.keySet()) {
+        for (String bot : botToState.keySet()) {
             if (botToState.get(bot) == query) {
                 result.add(bot);
             }
@@ -203,9 +208,9 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
         return result;
     }
 
-    private static String getTryBotResultsString(Map<String, TryBotResult.Result> botToState, TryBotResult.Result query) {
+    private static String getTryBotResultsString(Map<String, TryBotResult.Result> botToState, TryBotResult.Result query, String prefix) {
         List<String> filtered = findAll(botToState, query);
-        return  filtered.isEmpty() ? null : TextUtils.join(", ", filtered);
+        return filtered.isEmpty() ? null : prefix + TextUtils.join(", ", filtered);
     }
 
 }

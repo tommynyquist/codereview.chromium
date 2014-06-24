@@ -5,12 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.TryBotResult;
 import com.chrome.codereview.utils.ViewUtils;
-
-import java.util.List;
 
 /**
  * Created by sergeyv on 24/6/14.
@@ -27,9 +26,33 @@ public class TryBotsResultsAdapter extends ArrayAdapter<TryBotResult> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+            convertView = inflater.inflate(R.layout.try_bot_result_item, parent, false);
         }
-        ViewUtils.setText(convertView, android.R.id.text1, getItem(position).builder());
+        ViewUtils.setText(convertView, R.id.builder_name, getItem(position).builder());
+        int resource = 0;
+        int textColor = 0;
+        switch (getItem(position).result()) {
+            case SUCCESS:
+                textColor = R.color.scheme_green;
+                resource = R.string.try_bot_success;
+                break;
+            case FAILURE:
+                textColor = R.color.scheme_red;
+                resource = R.string.try_bot_failure;
+                break;
+            case WAITING:
+                textColor = R.color.scheme_blue;
+                resource = R.string.try_bot_waiting;
+                break;
+            case RUNNING:
+                textColor = R.color.scheme_blue;
+                resource = R.string.try_bot_running;
+                break;
+        }
+        TextView resultView = (TextView) convertView.findViewById(R.id.result);
+        resultView.setText(resource);
+        resultView.setTextColor(getContext().getResources().getColor(textColor));
         return convertView;
     }
+
 }

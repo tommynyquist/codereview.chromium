@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
@@ -22,6 +24,7 @@ import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
 import com.chrome.codereview.model.PublishData;
+import com.chrome.codereview.model.TryBotResult;
 import com.chrome.codereview.utils.BaseFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.ViewUtils;
@@ -283,7 +286,16 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
     public void showTryBotResultsDialog(PatchSet patchSet) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setAdapter(new TryBotsResultsAdapter(getActivity(), patchSet), null);
+        final TryBotsResultsAdapter adapter = new TryBotsResultsAdapter(getActivity(), patchSet);
+        builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                TryBotResult result = adapter.getItem(which);
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(result.url()));
+                startActivity(intent);
+            }
+        });
         builder.setTitle(getActivity().getString(R.string.try_bots_dialog_title));
         builder.create().show();
     }

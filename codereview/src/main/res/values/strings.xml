@@ -47,6 +47,15 @@
     <string name="skipping_lines">Skipping %s matching lines</string>
     <string name="try_bots_dialog_title">Try bots results</string>
 
+    <string name="try_bot_success">Success</string>
+    <string name="try_bot_failure">Failure</string>
+    <string name="try_bot_running">Running</string>
+    <string name="try_bot_waiting">Waiting</string>
+    <string name="try_bots_failure">Failed on: </string>
+    <string name="try_bots_running">Running on: </string>
+    <string name="try_bots_success">Succeed on all bots</string>
+
+
     <plurals name="year">
         <item quantity="one">year</item>
         <item quantity="other">years</item>

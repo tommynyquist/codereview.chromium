@@ -30,6 +30,7 @@ public class PatchSet {
         this.tryBotResults = Collections.unmodifiableList(tryBotResults);
         this.message = message != null ? message : "";
         this.files = files;
+        prepareBotToState();
     }
 
     public static PatchSet from(int patchSetId, JSONObject jsonObject) throws JSONException, ParseException {
