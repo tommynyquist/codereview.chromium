@@ -50,29 +50,37 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             } else if (url.startsWith(prefix2)) {
                 rest = url.substring(prefix2.length() + 1);
             } else {
-                super.onClick(widget);
+                safeSuperOnClick(widget);
                 return;
             }
 
             PatchSet foundPatchSet = null;
-            for (PatchSet patchSet: issue.patchSets()) {
+            for (PatchSet patchSet : issue.patchSets()) {
                 if (rest.startsWith(patchSet.id() + "")) {
                     foundPatchSet = patchSet;
                     break;
                 }
             }
             if (foundPatchSet == null) {
-                super.onClick(widget);
+                safeSuperOnClick(widget);
                 return;
             }
             rest = rest.substring((foundPatchSet.id() + "").length() + 1);
-            for (PatchSetFile file: foundPatchSet.files()) {
+            for (PatchSetFile file : foundPatchSet.files()) {
                 if (rest.startsWith(file.path())) {
                     DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issue.id(), foundPatchSet.id(), file);
                     return;
                 }
             }
-            super.onClick(widget);
+            safeSuperOnClick(widget);
+        }
+
+        private void safeSuperOnClick(View widget) {
+            try {
+                super.onClick(widget);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
