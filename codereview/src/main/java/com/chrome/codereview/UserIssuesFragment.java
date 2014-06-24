@@ -59,7 +59,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         if (!selectFirstIssue) {
             return;
         }
-        selectFirstIssue = true;
+        selectFirstIssue = false;
         for (int i = 0; i < issuesAdapter.getCount(); i++) {
             Issue issue = issuesAdapter.getItem(i);
             if (issue == null) {
@@ -69,6 +69,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
             if (selectionListener != null) {
                 selectionListener.onIssueSelected(issue);
             }
+            break;
         }
     }
 

@@ -238,7 +238,7 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
 
     private void showWriteCommentDialog(String text, String messageId, int line, boolean left) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.new_comment);
+        builder.setTitle(getString(R.string.new_comment, line));
         EditText editText = new EditText(getActivity());
         editText.setText(text);
         builder.setView(editText);
