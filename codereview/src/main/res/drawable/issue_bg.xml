@@ -1,25 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item
-        android:bottom="@dimen/half_pace"
-        android:left="@dimen/pace"
-        android:right="@dimen/pace"
-        android:top="@dimen/half_pace">
-        <shape android:shape="rectangle">
-            <solid android:color="#09090909"/>
-        </shape>
-    </item>
+    <item android:state_pressed="true"
+        android:drawable="@drawable/issue_bg_pressed"/>
 
-    <item
-        android:top="5dp"
-        android:left="9dp"
-        android:right="9dp"
-        android:bottom="6dp">
-        <shape>
-            <solid android:color="@android:color/white" />
-        </shape>
-    </item>
+    <item android:drawable="@drawable/issue_bg_default"/>
 
-</layer-list>
+</selector>
