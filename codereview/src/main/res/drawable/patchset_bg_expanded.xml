@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item
-        android:left="0dp"
-        android:right="0dp">
-        <shape android:shape="rectangle">
-            <solid android:color="#09090909"/>
-        </shape>
-    </item>
+<item android:state_pressed="true"
+    android:drawable="@drawable/patchset_bg_expanded_pressed"/>
 
-    <item
-        android:top="1dp"
-        android:left="1dp"
-        android:right="1dp">
-        <shape>
-            <solid android:color="@android:color/white" />
-        </shape>
-    </item>
+<item android:drawable="@drawable/patchset_bg_expanded_default"/>
 
-</layer-list>
+</selector>

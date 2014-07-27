@@ -31,5 +31,6 @@
         <item>@color/blue_5</item>
     </integer-array>
 
+    <color name="selected_bg">#f8f8f8f8</color>
 
 </resources>
