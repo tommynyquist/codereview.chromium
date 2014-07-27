@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="text">#1E1E1E</color>
-    <color name="diff_default_background">#F9F9F9</color>
+    <color name="diff_default_bg">#F9F9F9</color>
+    <color name="diff_default_bg_pressed">#F0F0F0</color>
     <color name="diff_marker_bg">#EAF2F5</color>
     <color name="diff_marker_text">#999999</color>
     <color name="diff_add">#DDFFDD</color>
+    <color name="diff_add_pressed">#BBFFBB</color>
     <color name="diff_add_text">#528E4C</color>
     <color name="diff_remove">#FFDDDD</color>
+    <color name="diff_remove_pressed">#FFBBBB</color>
     <color name="diff_remove_text">#932121</color>
     <color name="holo_gray_bright">#33999999</color>
 

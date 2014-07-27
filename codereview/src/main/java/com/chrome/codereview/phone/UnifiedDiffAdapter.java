@@ -56,21 +56,21 @@ public class UnifiedDiffAdapter extends DiffAdapter implements AdapterView.OnIte
             convertView = inflater.inflate(R.layout.diff_line, parent, false);
         }
 
-        int color;
+        int resource;
         switch (line.type()) {
             case LEFT:
-                color = R.color.diff_remove;
+                resource = R.drawable.diff_removed_line_bg;
                 break;
             case RIGHT:
-                color = R.color.diff_add;
+                resource = R.drawable.diff_added_line_bg;
                 break;
             case MARKER:
-                color = R.color.diff_marker_bg;
+                resource = R.drawable.diff_marker_line_bg;
                 break;
             default:
-                color = R.color.diff_default_background;
+                resource = R.drawable.diff_default_line_bg;
         }
-        convertView.setBackgroundColor(context.getResources().getColor(color));
+        convertView.setBackgroundDrawable(context.getResources().getDrawable(resource));
         ViewUtils.setText(convertView, android.R.id.text1, line.text());
         return convertView;
     }
