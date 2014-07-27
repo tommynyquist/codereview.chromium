@@ -175,9 +175,9 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         return convertView;
     }
 
-    private void initDiffLines(View partView, String line, int color, int lineNumber) {
-        int backgroundColor = lineNumber != NO_LINE_NUMBER ? color : R.color.diff_no_line;
-        partView.setBackgroundColor(context.getResources().getColor(backgroundColor));
+    private void initDiffLines(View partView, String line, int background, int lineNumber) {
+        int backgroundRes = lineNumber != NO_LINE_NUMBER ? background : R.drawable.diff_no_line_bg;
+        partView.setBackgroundDrawable(context.getResources().getDrawable(backgroundRes));
         ViewUtils.setText(partView, R.id.line, line);
         ViewUtils.setText(partView, R.id.lineNumber, lineNumber != NO_LINE_NUMBER ? lineNumber + "" : "");
         partView.setTag(lineNumber);
@@ -190,11 +190,11 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.side_by_side_diff_item, parent, false);
         }
-        int leftColor = content.isChanged ? R.color.diff_remove : R.color.diff_default_bg;
-        int rightColor = content.isChanged ? R.color.diff_add : R.color.diff_default_bg;
+        int leftBg = content.isChanged ? R.drawable.diff_added_line_bg : R.drawable.diff_default_line_bg;
+        int rightBg = content.isChanged ? R.drawable.diff_removed_line_bg : R.drawable.diff_default_line_bg;
 
-        initDiffLines(convertView.findViewById(R.id.left), content.left, leftColor, content.leftLineNumber);
-        initDiffLines(convertView.findViewById(R.id.right), content.right, rightColor, content.rightLineNumber);
+        initDiffLines(convertView.findViewById(R.id.left), content.left, leftBg, content.leftLineNumber);
+        initDiffLines(convertView.findViewById(R.id.right), content.right, rightBg, content.rightLineNumber);
         return convertView;
     }
 
