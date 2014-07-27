@@ -50,9 +50,13 @@
     <string name="try_bot_success">Success</string>
     <string name="try_bot_failure">Failure</string>
     <string name="try_bot_running">Running</string>
-    <string name="try_bot_waiting">Waiting</string>
+    <string name="try_bot_pending">Pending</string>
+    <string name="try_bot_skipped">Skipped</string>
+    <string name="try_bot_unknown">Unknown</string>
     <string name="try_bots_failure">Failed on: </string>
     <string name="try_bots_running">Running on: </string>
+    <string name="try_bots_pending">Pending on: </string>
+    <string name="try_bots_skipped">Skipped on: </string>
     <string name="try_bots_success">Succeed on all bots</string>
 
 

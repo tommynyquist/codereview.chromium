@@ -13,10 +13,22 @@ import java.util.List;
 public class TryBotResult {
 
     public enum Result {
-        SUCCESS,
-        FAILURE,
-        WAITING,
-        RUNNING
+        FAILURE(0),
+        SKIPPED(1),
+        PENDING(2),
+        RUNNING(3),
+        SUCCESS(4),
+        UNKNOWN(-1);
+
+        private final int order;
+
+        Result(int order) {
+            this.order = order;
+        }
+
+        public int order() {
+            return this.order;
+        }
     }
 
     private final String url;
@@ -33,11 +45,17 @@ public class TryBotResult {
             case 2:
                 this.result = Result.FAILURE;
                 break;
+            case 3:
+                this.result = Result.SKIPPED;
+                break;
             case -1:
                 this.result = Result.RUNNING;
                 break;
+            case 6:
+                this.result = Result.PENDING;
+                break;
             default:
-                throw new IllegalArgumentException("Unknown result: " + result);
+                this.result = Result.UNKNOWN;
         }
         this.builder = builder;
     }

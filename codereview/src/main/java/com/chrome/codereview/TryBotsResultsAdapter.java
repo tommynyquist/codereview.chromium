@@ -40,14 +40,21 @@ public class TryBotsResultsAdapter extends ArrayAdapter<TryBotResult> {
                 textColor = R.color.scheme_red;
                 resource = R.string.try_bot_failure;
                 break;
-            case WAITING:
+            case PENDING:
                 textColor = R.color.scheme_blue;
-                resource = R.string.try_bot_waiting;
+                resource = R.string.try_bot_pending;
                 break;
             case RUNNING:
                 textColor = R.color.scheme_blue;
                 resource = R.string.try_bot_running;
                 break;
+            case SKIPPED:
+                textColor = R.color.scheme_blue;
+                resource = R.string.try_bot_skipped;
+                break;
+            case UNKNOWN:
+                textColor = android.R.color.darker_gray;
+                resource = R.string.try_bot_unknown;
         }
         TextView resultView = (TextView) convertView.findViewById(R.id.result);
         resultView.setText(resource);

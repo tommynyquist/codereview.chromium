@@ -104,18 +104,7 @@ public class PatchSet {
         Collections.sort(results, new Comparator<TryBotResult>() {
             @Override
             public int compare(TryBotResult lhs, TryBotResult rhs) {
-                if (lhs.result() == rhs.result()) {
-                    return 0;
-                }
-                if (lhs.result() == TryBotResult.Result.FAILURE || rhs.result() == TryBotResult.Result.SUCCESS) {
-                    return -1;
-                }
-
-                if (rhs.result() == TryBotResult.Result.FAILURE || lhs.result() == TryBotResult.Result.SUCCESS) {
-                    return 1;
-                }
-                //left only wait and running
-                return lhs.result() == TryBotResult.Result.WAITING ? -1 : 1;
+                return rhs.result().order() - lhs.result().order();
             }
         });
 
