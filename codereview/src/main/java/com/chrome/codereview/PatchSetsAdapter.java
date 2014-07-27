@@ -110,6 +110,17 @@ public class PatchSetsAdapter extends BaseIDExpandableAdapter {
 
         String resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.FAILURE, context.getString(R.string.try_bots_failure));
         int textColor = R.color.scheme_red;
+
+        if (resultsString == null) {
+            resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.SKIPPED, context.getString(R.string.try_bots_skipped));
+            textColor = R.color.scheme_blue;
+        }
+
+        if (resultsString == null) {
+            resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.PENDING, context.getString(R.string.try_bots_pending));
+            textColor = R.color.scheme_blue;
+        }
+
         if (resultsString == null) {
             resultsString = getTryBotResultsString(patchSet.botToState(), TryBotResult.Result.RUNNING, context.getString(R.string.try_bots_running));
             textColor = R.color.scheme_blue;
