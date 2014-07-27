@@ -104,7 +104,7 @@ public class PatchSet {
         Collections.sort(results, new Comparator<TryBotResult>() {
             @Override
             public int compare(TryBotResult lhs, TryBotResult rhs) {
-                return rhs.result().order() - lhs.result().order();
+                return lhs.result().order() - rhs.result().order();
             }
         });
 
