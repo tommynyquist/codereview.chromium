@@ -190,8 +190,8 @@ public class SideBySideDiffAdapter extends DiffAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.side_by_side_diff_item, parent, false);
         }
-        int leftBg = content.isChanged ? R.drawable.diff_added_line_bg : R.drawable.diff_default_line_bg;
-        int rightBg = content.isChanged ? R.drawable.diff_removed_line_bg : R.drawable.diff_default_line_bg;
+        int leftBg = content.isChanged ? R.drawable.diff_removed_line_bg : R.drawable.diff_default_line_bg;
+        int rightBg = content.isChanged ? R.drawable.diff_added_line_bg : R.drawable.diff_default_line_bg;
 
         initDiffLines(convertView.findViewById(R.id.left), content.left, leftBg, content.leftLineNumber);
         initDiffLines(convertView.findViewById(R.id.right), content.right, rightBg, content.rightLineNumber);
