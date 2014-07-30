@@ -10,7 +10,7 @@
 
     <string name="add_chromium_account_description">Please add your chromium account to proceed.</string>
     <string name="toast_auth_failed">Authentication Failed</string>
-    <string name="trying_to_authenticate">Trying to authenticate with </string>
+    <string name="trying_to_authenticate">Trying to authenticate with %1$s</string>
     <string name="login">Login</string>
 
     <string name="header_incoming_reviews">INCOMING REVIEWS</string>

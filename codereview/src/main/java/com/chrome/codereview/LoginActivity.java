@@ -137,7 +137,7 @@ public class LoginActivity extends Activity implements LoaderManager.LoaderCallb
         getLoaderManager().restartLoader(0, new Bundle(), this).forceLoad();
         progressDialog = new ProgressDialog(this);
         progressDialog.setIndeterminate(true);
-        progressDialog.setMessage(getString(R.string.trying_to_authenticate) + serverCaller.getAccountName());
+        progressDialog.setMessage(getString(R.string.trying_to_authenticate, serverCaller.getAccountName()));
         progressDialog.show();
     }
 
