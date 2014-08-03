@@ -1,5 +1,8 @@
 package com.chrome.codereview.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,7 +18,25 @@ import java.util.Map;
 /**
  * Created by sergeyv on 21/4/14.
  */
-public class PatchSet {
+public class PatchSet implements Parcelable {
+
+    public static final Parcelable.Creator<PatchSet> CREATOR = new Creator<PatchSet>() {
+
+        public PatchSet createFromParcel(Parcel source) {
+            String message = source.readString();
+            List<PatchSetFile> files = new ArrayList<PatchSetFile>();
+            source.readTypedList(files, PatchSetFile.CREATOR);
+            int numComments = source.readInt();
+            int patchSetId = source.readInt();
+            return new PatchSet(message, files, numComments, patchSetId, new ArrayList<TryBotResult>());
+        }
+
+        @Override
+        public PatchSet[] newArray(int size) {
+            return new PatchSet[size];
+        }
+
+    };
 
     private final String message;
     private final List<PatchSetFile> files;
@@ -108,8 +129,21 @@ public class PatchSet {
             }
         });
 
-        for (TryBotResult result: results) {
+        for (TryBotResult result : results) {
             botToState.put(result.builder(), result.result());
         }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(message);
+        dest.writeTypedList(files);
+        dest.writeInt(numComments);
+        dest.writeInt(patchSetId);
     }
 }

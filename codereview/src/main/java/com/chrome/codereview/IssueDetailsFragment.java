@@ -15,7 +15,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
@@ -258,7 +257,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
         if (file != null) {
-            DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
+            DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet, file.id());
         } else {
             showTryBotResultsDialog(patchSet);
         }
