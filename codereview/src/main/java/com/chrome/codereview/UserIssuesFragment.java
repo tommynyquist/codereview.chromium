@@ -121,7 +121,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         this.selectionListener = selectionListener;
     }
 
-    private HashMap<Long, Integer> mItemIdTopMap = new HashMap<Long, Integer>();
+    private HashMap<Long, Integer> itemIdTopMap = new HashMap<Long, Integer>();
     private boolean mSwiping = false;
     private boolean mItemPressed = false;
 
@@ -153,8 +153,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                     v.setTranslationX(0);
                     mItemPressed = false;
                     break;
-                case MotionEvent.ACTION_MOVE:
-                {
+                case MotionEvent.ACTION_MOVE: {
                     float x = event.getX() + v.getTranslationX();
                     float deltaX = x - mDownX;
                     float deltaXAbs = Math.abs(deltaX);
@@ -171,8 +170,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                     }
                 }
                 break;
-                case MotionEvent.ACTION_UP:
-                {
+                case MotionEvent.ACTION_UP: {
                     // User let go - figure out whether to animate the view out, or back into place
                     if (mSwiping) {
                         float x = event.getX() + v.getTranslationX();
@@ -244,7 +242,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
             if (child != viewToRemove) {
                 int position = firstVisiblePosition + i;
                 long itemId = issuesAdapter.getItemId(position);
-                mItemIdTopMap.put(itemId, child.getTop());
+                itemIdTopMap.put(itemId, child.getTop());
             }
         }
         // Delete the item from the adapter
@@ -257,50 +255,42 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                 observer.removeOnPreDrawListener(this);
                 boolean firstAnimation = true;
                 int firstVisiblePosition = listView.getFirstVisiblePosition();
+                Runnable lastAction = new Runnable() {
+                    public void run() {
+                        mBackgroundContainer.hideBackground();
+                        mSwiping = false;
+                        listView.setEnabled(true);
+                    }
+                };
                 for (int i = 0; i < listView.getChildCount(); ++i) {
                     final View child = listView.getChildAt(i);
                     int position = firstVisiblePosition + i;
                     long itemId = issuesAdapter.getItemId(position);
-                    Integer startTop = mItemIdTopMap.get(itemId);
+                    Integer startTop = itemIdTopMap.get(itemId);
                     int top = child.getTop();
-                    if (startTop != null) {
-                        if (startTop != top) {
-                            int delta = startTop - top;
-                            child.setTranslationY(delta);
-                            child.animate().setDuration(MOVE_DURATION).translationY(0);
-                            if (firstAnimation) {
-                                child.animate().withEndAction(new Runnable() {
-                                    public void run() {
-                                        mBackgroundContainer.hideBackground();
-                                        mSwiping = false;
-                                        listView.setEnabled(true);
-                                    }
-                                });
-                                firstAnimation = false;
-                            }
-                        }
-                    } else {
+                    if (startTop == null) {
                         // Animate new views along with the others. The catch is that they did not
                         // exist in the start state, so we must calculate their starting position
                         // based on neighboring views.
                         int childHeight = child.getHeight() + listView.getDividerHeight();
                         startTop = top + (i > 0 ? childHeight : -childHeight);
-                        int delta = startTop - top;
-                        child.setTranslationY(delta);
-                        child.animate().setDuration(MOVE_DURATION).translationY(0);
-                        if (firstAnimation) {
-                            child.animate().withEndAction(new Runnable() {
-                                public void run() {
-                                    mBackgroundContainer.hideBackground();
-                                    mSwiping = false;
-                                    listView.setEnabled(true);
-                                }
-                            });
-                            firstAnimation = false;
-                        }
                     }
+                    if (startTop == top) {
+                        continue;
+                    }
+                    int delta = startTop - top;
+                    child.setTranslationY(delta);
+                    child.animate().setDuration(MOVE_DURATION).translationY(0);
+                    if (firstAnimation) {
+                        child.animate().withEndAction(lastAction);
+                        firstAnimation = false;
+                    }
+
                 }
-                mItemIdTopMap.clear();
+                if (firstAnimation) {
+                    lastAction.run();
+                }
+                itemIdTopMap.clear();
                 return true;
             }
         });
