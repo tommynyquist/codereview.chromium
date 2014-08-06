@@ -1,12 +1,10 @@
 package com.chrome.codereview;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
@@ -16,7 +14,6 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.chrome.codereview.model.Issue;
-import com.chrome.codereview.model.Message;
 import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
 import com.chrome.codereview.utils.DateUtils;
@@ -80,7 +77,8 @@ class UserIssuesAdapter extends BaseAdapter {
 
     @Override
     public long getItemId(int position) {
-        return position;
+        Box box = boxes.get(position);
+        return box.isBoxIssue() ? box.issue.id() : -Math.abs(box.titleResource);
     }
 
     public void setUserIssues(UserIssues userIssues) {
@@ -141,17 +139,23 @@ class UserIssuesAdapter extends BaseAdapter {
         }
         boxes.add(new Box(titleRes));
         for (Issue issue : issues) {
-            boxes.add(new Box(issue));
+            boolean contained = false;
+            for (Box box : boxes) {
+                if (box.isBoxIssue() && box.issue.id() == issue.id()) {
+                    contained = true;
+                    continue;
+                }
+            }
+            if (!contained) {
+                boxes.add(new Box(issue));
+            }
         }
     }
 
     public Spannable reviewersSpannable(List<Reviewer> reviewers) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
         String reviewersPrefix = context.getString(R.string.reviewers);
-        int defaultColor = context.getResources().getColor(R.color.group_text_color);
         builder.append(reviewersPrefix + " ");
-
-//        builder.setSpan(new ForegroundColorSpan(Color.rgb(85,85,85)), 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         builder.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         boolean firstReviewer = true;
         for (Reviewer reviewer : reviewers) {
@@ -161,7 +165,7 @@ class UserIssuesAdapter extends BaseAdapter {
             int start = builder.length();
             int end = builder.length() + reviewer.name().length();
             builder.append(reviewer.name());
-            if (reviewer.decoration() != null){
+            if (reviewer.decoration() != null) {
                 builder.setSpan(new ForegroundColorSpan(reviewer.decoration().color(context)), start, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
             firstReviewer = false;
@@ -169,4 +173,8 @@ class UserIssuesAdapter extends BaseAdapter {
         return builder;
     }
 
+    @Override
+    public boolean hasStableIds() {
+        return true;
+    }
 }
