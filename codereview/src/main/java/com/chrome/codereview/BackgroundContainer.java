@@ -20,6 +20,9 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
@@ -27,11 +30,14 @@ import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
 
 public class BackgroundContainer extends PullToRefreshLayout {
 
+    private Drawable backgroundDrawable;
     private boolean mShowing;
     private int mOpenAreaTop;
     private int mOpenAreaHeight;
     private TextPaint textPaint;
     private String backgroundText;
+    boolean mUpdateBounds = false;
+    private Rect textBounds;
 
     public BackgroundContainer(Context context) {
         super(context);
@@ -50,11 +56,17 @@ public class BackgroundContainer extends PullToRefreshLayout {
 
     private void init() {
         Resources resources = getResources();
+        backgroundDrawable = getResources().getDrawable(R.drawable.issue_backcontainer_bg);
         textPaint = new TextPaint();
-        textPaint.setColor(Color.RED);
+        textPaint.setColor(Color.WHITE);
         textPaint.setTextAlign(TextPaint.Align.CENTER);
+
         textPaint.setTextSize(getResources().getDimensionPixelSize(R.dimen.swipe_background_text_size));
+        textPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+        textPaint.setAntiAlias(true);
         backgroundText = resources.getString(R.string.swipe_background_text_to_left);
+        textBounds = new Rect();
+        textPaint.getTextBounds(backgroundText, 0, backgroundText.length(), textBounds);
     }
 
     @Override
@@ -67,6 +79,7 @@ public class BackgroundContainer extends PullToRefreshLayout {
         mOpenAreaTop = top;
         mOpenAreaHeight = bottom;
         mShowing = true;
+        mUpdateBounds = true;
     }
 
     public void hideBackground() {
@@ -77,8 +90,13 @@ public class BackgroundContainer extends PullToRefreshLayout {
     @Override
     protected void onDraw(Canvas canvas) {
         if (mShowing) {
+            if (mUpdateBounds) {
+                backgroundDrawable.setBounds(0, 0, getWidth(), mOpenAreaHeight);
+            }
             canvas.save();
-            canvas.drawText(backgroundText, getWidth() / 4, mOpenAreaTop + mOpenAreaHeight / 2, textPaint);
+            canvas.translate(0, mOpenAreaTop);
+            backgroundDrawable.draw(canvas);
+            canvas.drawText(backgroundText, getWidth() / 2, mOpenAreaHeight / 2 + textBounds.height() / 2, textPaint);
             canvas.restore();
         }
         super.onDraw(canvas);

@@ -19,13 +19,14 @@
 
     <color name="group_text_color">#707070</color>
 
+    <color name="theme_blue">#324359</color>
+
     <color name="blue_1">#183650</color>
     <color name="blue_2">#375d81</color>
     <color name="blue_3">#abc8e2</color>
     <color name="blue_4">#c4d7ed</color>
     <color name="blue_5">#fffff8</color>
 
-    <color name="diff_no_line">#eee</color>
     <integer-array name="shades1">
         <item>@color/blue_1</item>
         <item>@color/blue_2</item>
@@ -35,5 +36,6 @@
     </integer-array>
 
     <color name="selected_bg">#f8f8f8f8</color>
+    <color name="diff_no_line">#eee</color>
 
 </resources>

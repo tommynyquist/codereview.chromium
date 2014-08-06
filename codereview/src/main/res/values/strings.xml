@@ -59,7 +59,7 @@
     <string name="try_bots_skipped">Skipped on: </string>
     <string name="try_bots_success">Succeed on all bots</string>
 
-    <string name="swipe_background_text_to_left">Wait till Update!</string>
+    <string name="swipe_background_text_to_left">WAIT TILL UPDATE!</string>
 
     <plurals name="year">
         <item quantity="one">year</item>
