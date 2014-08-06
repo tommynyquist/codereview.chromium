@@ -53,9 +53,11 @@ class UserIssuesAdapter extends BaseAdapter {
 
     private final LayoutInflater inflater;
     private final Context context;
+    private final View.OnTouchListener touchListener;
 
-    public UserIssuesAdapter(Context context) {
+    public UserIssuesAdapter(Context context, View.OnTouchListener touchListener) {
         this.context = context;
+        this.touchListener = touchListener;
         inflater = LayoutInflater.from(context);
     }
 
@@ -113,6 +115,7 @@ class UserIssuesAdapter extends BaseAdapter {
         Issue issue = boxes.get(position).issue;
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.issue_item, parent, false);
+            convertView.setOnTouchListener(touchListener);
         }
         ViewUtils.setText(convertView, R.id.subject, issue.subject());
         ViewUtils.setText(convertView, R.id.owner, issue.owner());
@@ -139,14 +142,8 @@ class UserIssuesAdapter extends BaseAdapter {
         }
         boxes.add(new Box(titleRes));
         for (Issue issue : issues) {
-            boolean contained = false;
-            for (Box box : boxes) {
-                if (box.isBoxIssue() && box.issue.id() == issue.id()) {
-                    contained = true;
-                    continue;
-                }
-            }
-            if (!contained) {
+            Box box = findBoxByIssue(issue);
+            if (box == null) {
                 boxes.add(new Box(issue));
             }
         }
@@ -176,5 +173,26 @@ class UserIssuesAdapter extends BaseAdapter {
     @Override
     public boolean hasStableIds() {
         return true;
+    }
+
+    private Box findBoxByIssue(Issue issue) {
+        for (Box box : boxes) {
+            if (box.isBoxIssue() && box.issue.id() == issue.id()) {
+                return box;
+            }
+        }
+        return null;
+    }
+
+    public void remove(Issue issue) {
+        if (issue == null) {
+            return;
+        }
+        Box box = findBoxByIssue(issue);
+        if (box == null) {
+            return;
+        }
+        boxes.remove(box);
+        notifyDataSetChanged();
     }
 }
