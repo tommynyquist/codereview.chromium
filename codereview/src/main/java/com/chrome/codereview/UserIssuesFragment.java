@@ -9,6 +9,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.widget.ListView;
 
@@ -17,6 +18,7 @@ import com.chrome.codereview.model.UserIssues;
 import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
+import com.chrome.codereview.utils.ViewUtils;
 
 import java.util.HashMap;
 
@@ -204,23 +206,23 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                         // back at an appropriate speed.
                         long duration = (int) ((1 - fractionCovered) * SWIPE_DURATION);
                         listView.setEnabled(false);
-                        v.animate().setDuration(duration).
-                                alpha(endAlpha).translationX(endX).
-                                withEndAction(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // Restore animated values
-                                        v.setAlpha(1);
-                                        v.setTranslationX(0);
-                                        if (remove) {
-                                            animateRemoval(v);
-                                        } else {
-                                            mBackgroundContainer.hideBackground();
-                                            mSwiping = false;
-                                            listView.setEnabled(true);
-                                        }
-                                    }
-                                });
+                        ViewPropertyAnimator animator = v.animate().setDuration(duration).
+                                alpha(endAlpha).translationX(endX);
+                        ViewUtils.onAnimationEnd(animator, new Runnable() {
+                            @Override
+                            public void run() {
+                                // Restore animated values
+                                v.setAlpha(1);
+                                v.setTranslationX(0);
+                                if (remove) {
+                                    animateRemoval(v);
+                                } else {
+                                    mBackgroundContainer.hideBackground();
+                                    mSwiping = false;
+                                    listView.setEnabled(true);
+                                }
+                            }
+                        });
 
                         return true;
                     }
@@ -285,7 +287,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                     child.setTranslationY(delta);
                     child.animate().setDuration(MOVE_DURATION).translationY(0);
                     if (firstAnimation) {
-                        child.animate().withEndAction(lastAction);
+                        ViewUtils.onAnimationEnd(child.animate(), lastAction);
                         firstAnimation = false;
                     }
 

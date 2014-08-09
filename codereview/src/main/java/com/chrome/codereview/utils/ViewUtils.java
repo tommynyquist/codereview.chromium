@@ -1,6 +1,10 @@
 package com.chrome.codereview.utils;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.os.Build;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,5 +30,18 @@ public class ViewUtils {
     public static void expandView(View convertView, boolean isExpanded) {
         ImageView imageView = (ImageView) convertView.findViewById(R.id.expander);
         imageView.getDrawable().setState(isExpanded ? new int[]{android.R.attr.state_expanded} : new int[]{});
+    }
+
+    public static void onAnimationEnd(ViewPropertyAnimator viewPropertyAnimator, final Runnable onEnd) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    onEnd.run();
+                }
+            });
+        } else {
+            viewPropertyAnimator.withEndAction(onEnd);
+        }
     }
 }
