@@ -26,9 +26,11 @@ import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
+import com.chrome.codereview.utils.SwipeListView;
+
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
 
-public class BackgroundContainer extends PullToRefreshLayout {
+public class BackgroundContainer extends PullToRefreshLayout implements SwipeListView.BackgroundToggle {
 
     private Drawable backgroundDrawable;
     private boolean mShowing;

@@ -17,6 +17,7 @@ import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.UserIssues;
 import com.chrome.codereview.utils.DateUtils;
+import com.chrome.codereview.utils.SwipeListAdapter;
 import com.chrome.codereview.utils.ViewUtils;
 
 import java.util.ArrayList;
@@ -25,14 +26,10 @@ import java.util.List;
 /**
  * Created by sergeyv on 20/4/14.
  */
-class UserIssuesAdapter extends BaseAdapter {
+class UserIssuesAdapter extends SwipeListAdapter {
 
     private static final int TYPE_ISSUE = 0;
     private static final int TYPE_GROUP_HEADER = 1;
-
-    public interface onIssueClickListener {
-        void onIssueClicked(Issue issue);
-    }
 
     private static class Box {
 
@@ -57,20 +54,9 @@ class UserIssuesAdapter extends BaseAdapter {
 
     private final LayoutInflater inflater;
     private final Context context;
-    private final View.OnTouchListener touchListener;
-    private final View.OnClickListener clickListener;
 
-    public UserIssuesAdapter(Context context, View.OnTouchListener touchListener, final onIssueClickListener onIssueClickListener) {
+    public UserIssuesAdapter(Context context) {
         this.context = context;
-        this.touchListener = touchListener;
-        clickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Integer position = (Integer) v.getTag();
-                Issue issue = boxes.get(position).issue;
-                onIssueClickListener.onIssueClicked(issue);
-            }
-        };
         inflater = LayoutInflater.from(context);
     }
 
@@ -116,11 +102,9 @@ class UserIssuesAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
         if (getItemViewType(position) == TYPE_GROUP_HEADER) {
             return getGroupHeaderView(boxes.get(position).titleResource, convertView, parent);
         }
-
         return getIssueView(position, convertView, parent);
     }
 
@@ -128,9 +112,6 @@ class UserIssuesAdapter extends BaseAdapter {
         Issue issue = boxes.get(position).issue;
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.issue_item, parent, false);
-            convertView.setOnTouchListener(touchListener);
-            convertView.setOnClickListener(clickListener);
-            convertView.setTag(position);
         }
         ViewUtils.setText(convertView, R.id.subject, issue.subject());
         ViewUtils.setText(convertView, R.id.owner, issue.owner());
@@ -138,7 +119,6 @@ class UserIssuesAdapter extends BaseAdapter {
         TextView reviewers = (TextView) convertView.findViewById(R.id.reviewers);
         reviewers.setText(reviewersSpannable(issue.reviewers()), TextView.BufferType.SPANNABLE);
         ViewUtils.setText(convertView, R.id.modified, DateUtils.createAgoText(context, issue.lastModified()));
-
         return convertView;
     }
 
@@ -199,15 +179,15 @@ class UserIssuesAdapter extends BaseAdapter {
         return null;
     }
 
-    public void remove(Issue issue) {
-        if (issue == null) {
-            return;
-        }
-        Box box = findBoxByIssue(issue);
-        if (box == null) {
-            return;
-        }
-        boxes.remove(box);
+    @Override
+    public boolean isItemSwipable(int position) {
+        return getItem(position) != null;
+    }
+
+    @Override
+    public void remove(int position) {
+        boxes.remove(position);
         notifyDataSetChanged();
+
     }
 }
