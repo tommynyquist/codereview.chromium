@@ -12,14 +12,17 @@ import android.net.Uri;
 public class IssueStateProvider extends ContentProvider {
 
     public static final String COLUMN_ISSUE_ID = "ISSUE_ID";
+    public static final String COLUMN_MODIFICATION_TIME = "TIME";
 
     private static final String HIDDEN_TABLE = "hidden_issues";
 
     private static final String SQL_CREATE_HIDDEN_ISSUE_TABLE = "CREATE TABLE " +
-            HIDDEN_TABLE + " "  +                      // Table's name
+            HIDDEN_TABLE + " " +                      // Table's name
             "(" +                           // The columns in the table
             " _ID INTEGER PRIMARY KEY, " +
-             COLUMN_ISSUE_ID + " INTEGER)";
+            COLUMN_ISSUE_ID + " INTEGER," +
+            COLUMN_MODIFICATION_TIME + " INTEGER" +
+            ")";
 
 
     private static final String AUTHORITY = "com.chromium.codereview.issue.state";
@@ -29,6 +32,7 @@ public class IssueStateProvider extends ContentProvider {
     public static final Uri HIDDEN_ISSUES_URI = Uri.parse("content://" + AUTHORITY + "/" + HIDDEN);
 
     private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
+
     static {
         URI_MATCHER.addURI(AUTHORITY, HIDDEN, HIDDEN_CODE);
     }
@@ -86,7 +90,7 @@ public class IssueStateProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
+                        String[] selectionArgs, String sortOrder) {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         switch (URI_MATCHER.match(uri)) {
             case HIDDEN_CODE:
@@ -98,7 +102,7 @@ public class IssueStateProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
+                      String[] selectionArgs) {
         throw new UnsupportedOperationException("Update is not supported");
     }
 }

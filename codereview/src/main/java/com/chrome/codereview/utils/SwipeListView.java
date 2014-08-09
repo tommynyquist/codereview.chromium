@@ -28,9 +28,8 @@ public class SwipeListView extends ListView {
 
     public interface OnSwipeListener {
 
-        void onSwipeToTheLeft(Object item);
+        void onSwipe(Object item, int direction);
 
-        void onSwipeToTheRight(Object item);
     }
 
     public static final int DIRECTION_LEFT = 1;
@@ -100,7 +99,7 @@ public class SwipeListView extends ListView {
         if (action == MotionEvent.ACTION_DOWN) {
             int position = pointToPosition((int) event.getX(), (int) event.getY());
             swipedView = getChildAt(position - getFirstVisiblePosition());
-            state = position == INVALID_POSITION || !getAdapter().isItemSwipable(position)? NOT_SWIPE : UNKNOWN;
+            state = position == INVALID_POSITION || !getAdapter().isItemSwipable(position) ? NOT_SWIPE : UNKNOWN;
             downX = event.getX();
             downY = event.getY();
             return super.onTouchEvent(event);
@@ -238,11 +237,7 @@ public class SwipeListView extends ListView {
                         if (swipeListener == null) {
                             return;
                         }
-                        if (swipeDirection == DIRECTION_LEFT) {
-                            swipeListener.onSwipeToTheLeft(removedItem);
-                        } else {
-                            swipeListener.onSwipeToTheRight(removedItem);
-                        }
+                        swipeListener.onSwipe(removedItem, swipeDirection);
                     }
                 };
                 for (int i = 0; i < getChildCount(); ++i) {

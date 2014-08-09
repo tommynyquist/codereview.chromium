@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +20,6 @@ import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.SwipeListView;
-
-import java.util.HashSet;
 
 
 /**
@@ -45,13 +44,16 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         public UserIssues loadInBackground() {
             UserIssues userIssues = ServerCaller.from(getContext()).loadIssuesForUser(userName);
             Cursor cursor = getContext().getContentResolver().query(IssueStateProvider.HIDDEN_ISSUES_URI, null, null, null, null);
-            HashSet<Integer> filteredIds = new HashSet<Integer>();
-            int index = cursor.getColumnIndex(IssueStateProvider.COLUMN_ISSUE_ID);
+            SparseArray<Long> idToModificationTime  = new SparseArray<Long>();
+            int columnId = cursor.getColumnIndex(IssueStateProvider.COLUMN_ISSUE_ID);
+            int columnModification = cursor.getColumnIndex(IssueStateProvider.COLUMN_MODIFICATION_TIME);
             while (cursor.moveToNext()) {
-                filteredIds.add(cursor.getInt(index));
+                int issueId = cursor.getInt(columnId);
+                long lastModification = cursor.getLong(columnModification);
+                idToModificationTime.put(issueId, lastModification);
             }
             cursor.close();
-            userIssues.filter(filteredIds);
+            userIssues.filter(idToModificationTime);
             return userIssues;
         }
     }
@@ -130,22 +132,15 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         this.selectionListener = selectionListener;
     }
 
-
     @Override
-    public void onSwipeToTheLeft(Object item) {
-        if (item == null) {
-            return;
-        }
-    }
-
-    @Override
-    public void onSwipeToTheRight(Object item) {
+    public void onSwipe(Object item, int direction) {
         if (item == null) {
             return;
         }
         Issue issue = (Issue) item;
         ContentValues values = new ContentValues();
         values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
+        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime() );
         ContentResolver contentResolver = getActivity().getContentResolver();
         contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }

@@ -1,7 +1,8 @@
 package com.chrome.codereview.model;
 
+import android.util.SparseArray;
+
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -44,17 +45,18 @@ public class UserIssues {
         return recentlyClosed;
     }
 
-    public void filter(HashSet<Integer> ids) {
-        incomingReviews = filterList(incomingReviews, ids);
-        outgoingReviews = filterList(outgoingReviews, ids);
-        ccReviews = filterList(ccReviews, ids);
-        recentlyClosed = filterList(recentlyClosed, ids);
+    public void filter(SparseArray<Long> idToModificationTime) {
+        incomingReviews = filterList(incomingReviews, idToModificationTime);
+        outgoingReviews = filterList(outgoingReviews, idToModificationTime);
+        ccReviews = filterList(ccReviews, idToModificationTime);
+        recentlyClosed = filterList(recentlyClosed, idToModificationTime);
     }
 
-    private static List<Issue> filterList(List<Issue> list, HashSet<Integer> ids) {
+    private static List<Issue> filterList(List<Issue> list, SparseArray<Long> idToModificationTime) {
         List<Issue> result = new ArrayList<Issue>();
         for (Issue issue : list) {
-            if (!ids.contains(issue.id())) {
+            long lastSavedModification = idToModificationTime.get(issue.id(), 1l);
+            if (issue.lastModified().getTime() > lastSavedModification) {
                 result.add(issue);
             }
         }
