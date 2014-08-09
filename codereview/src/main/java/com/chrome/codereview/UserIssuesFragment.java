@@ -126,7 +126,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     private HashMap<Long, Integer> itemIdTopMap = new HashMap<Long, Integer>();
     private boolean mSwiping = false;
-    private boolean mItemPressed = false;
+    private View pressedView = null;
 
     /**
      * Handle touch events to fade/move dragged items as they are swiped out
@@ -142,19 +142,22 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                 swipeSlop = ViewConfiguration.get(getActivity()).
                         getScaledTouchSlop();
             }
+            if (pressedView != v && event.getAction() != MotionEvent.ACTION_DOWN) {
+                return false;
+            }
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    if (mItemPressed) {
+                    if (pressedView != null) {
                         // Multi-item swipes not handled
                         return false;
                     }
-                    mItemPressed = true;
+                    pressedView = v;
                     downX = event.getX();
                     return false;
                 case MotionEvent.ACTION_CANCEL:
                     v.setAlpha(1);
                     v.setTranslationX(0);
-                    mItemPressed = false;
+                    pressedView = null;
                     return false;
                 case MotionEvent.ACTION_MOVE: {
                     float x = event.getX() + v.getTranslationX();
@@ -177,7 +180,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                 }
                 case MotionEvent.ACTION_UP: {
                     // User let go - figure out whether to animate the view out, or back into place
-                    mItemPressed = false;
+                    pressedView = null;
                     if (mSwiping) {
                         float x = event.getX() + v.getTranslationX();
                         float deltaX = x - downX;
