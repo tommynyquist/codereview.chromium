@@ -1,14 +1,18 @@
 package com.chrome.codereview;
 
 import android.app.LoaderManager;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.UserIssues;
 import com.chrome.codereview.requests.ServerCaller;
@@ -16,11 +20,13 @@ import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.SwipeListView;
 
+import java.util.HashSet;
+
 
 /**
  * Created by sergeyv on 13/4/14.
  */
-public class UserIssuesFragment extends BaseListFragment implements LoaderManager.LoaderCallbacks<UserIssues> {
+public class UserIssuesFragment extends BaseListFragment implements LoaderManager.LoaderCallbacks<UserIssues>, SwipeListView.OnSwipeListener {
 
     public interface IssueSelectionListener {
         void onIssueSelected(Issue issue);
@@ -37,7 +43,16 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
         @Override
         public UserIssues loadInBackground() {
-            return ServerCaller.from(getContext()).loadIssuesForUser(userName);
+            UserIssues userIssues = ServerCaller.from(getContext()).loadIssuesForUser(userName);
+            Cursor cursor = getContext().getContentResolver().query(IssueStateProvider.HIDDEN_ISSUES_URI, null, null, null, null);
+            HashSet<Integer> filteredIds = new HashSet<Integer>();
+            int index = cursor.getColumnIndex(IssueStateProvider.COLUMN_ISSUE_ID);
+            while (cursor.moveToNext()) {
+                filteredIds.add(cursor.getInt(index));
+            }
+            cursor.close();
+            userIssues.filter(filteredIds);
+            return userIssues;
         }
     }
 
@@ -96,6 +111,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         issuesAdapter = new UserIssuesAdapter(getActivity());
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         SwipeListView listView = (SwipeListView) layout.findViewById(android.R.id.list);
+        listView.setSwipeListener(this);
         BackgroundContainer mBackgroundContainer = (BackgroundContainer) layout.findViewById(R.id.ptr_layout);
         listView.setBackgroundToggle(mBackgroundContainer);
         return layout;
@@ -112,6 +128,26 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     public void setIssueSelectionListener(IssueSelectionListener selectionListener) {
         this.selectionListener = selectionListener;
+    }
+
+
+    @Override
+    public void onSwipeToTheLeft(Object item) {
+        if (item == null) {
+            return;
+        }
+    }
+
+    @Override
+    public void onSwipeToTheRight(Object item) {
+        if (item == null) {
+            return;
+        }
+        Issue issue = (Issue) item;
+        ContentValues values = new ContentValues();
+        values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
+        ContentResolver contentResolver = getActivity().getContentResolver();
+        contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }
 
 

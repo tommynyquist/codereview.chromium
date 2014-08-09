@@ -1,6 +1,7 @@
 package com.chrome.codereview.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -8,16 +9,16 @@ import java.util.List;
  */
 public class UserIssues {
 
-    private final List<Issue> incomingReviews;
-    private final List<Issue> outgoingReviews;
-    private final List<Issue> ccReviews;
-    private final List<Issue> recentlyClosed;
+    private List<Issue> incomingReviews;
+    private List<Issue> outgoingReviews;
+    private List<Issue> ccReviews;
+    private List<Issue> recentlyClosed;
 
     public UserIssues(List<Issue> incoming, List<Issue> mineIssues, List<Issue> ccReviews) {
         this.incomingReviews = incoming;
         this.outgoingReviews = new ArrayList<Issue>();
         this.recentlyClosed = new ArrayList<Issue>();
-        for (Issue issue: mineIssues) {
+        for (Issue issue : mineIssues) {
             if (issue.isClosed()) {
                 recentlyClosed.add(issue);
             } else {
@@ -41,5 +42,22 @@ public class UserIssues {
 
     public List<Issue> recentlyClosed() {
         return recentlyClosed;
+    }
+
+    public void filter(HashSet<Integer> ids) {
+        incomingReviews = filterList(incomingReviews, ids);
+        outgoingReviews = filterList(outgoingReviews, ids);
+        ccReviews = filterList(ccReviews, ids);
+        recentlyClosed = filterList(recentlyClosed, ids);
+    }
+
+    private static List<Issue> filterList(List<Issue> list, HashSet<Integer> ids) {
+        List<Issue> result = new ArrayList<Issue>();
+        for (Issue issue : list) {
+            if (!ids.contains(issue.id())) {
+                result.add(issue);
+            }
+        }
+        return result;
     }
 }

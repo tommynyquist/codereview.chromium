@@ -10,9 +10,6 @@ import android.view.ViewTreeObserver;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
-import com.chrome.codereview.utils.SwipeListAdapter;
-import com.chrome.codereview.utils.ViewUtils;
-
 import java.util.HashMap;
 
 /**
@@ -27,6 +24,13 @@ public class SwipeListView extends ListView {
         void changeDirection(int swipeDirection);
 
         void hideBackground();
+    }
+
+    public interface OnSwipeListener {
+
+        void onSwipeToTheLeft(Object item);
+
+        void onSwipeToTheRight(Object item);
     }
 
     public static final int DIRECTION_LEFT = 1;
@@ -44,6 +48,9 @@ public class SwipeListView extends ListView {
     private int state = UNKNOWN;
     private int swipeDirection = 0;
     private BackgroundToggle backgroundToggle;
+
+    private OnSwipeListener swipeListener;
+
     public SwipeListView(Context context) {
         super(context);
         init();
@@ -63,6 +70,10 @@ public class SwipeListView extends ListView {
     private View swipedView = null;
     private float downY;
 
+
+    public void setSwipeListener(OnSwipeListener swipeListener) {
+        this.swipeListener = swipeListener;
+    }
 
     public void setBackgroundToggle(BackgroundToggle backgroundToggle) {
         this.backgroundToggle = backgroundToggle;
@@ -176,7 +187,7 @@ public class SwipeListView extends ListView {
                     // Restore animated values
                     setPressedViewState(0, 1);
                     if (remove) {
-                        animateRemoval(swipedView);
+                        animateRemoval(swipedView, swipeDirection);
                     } else {
                         backgroundToggle.hideBackground();
                         setEnabled(true);
@@ -198,7 +209,7 @@ public class SwipeListView extends ListView {
      * everything is now, then allow layout to run, then figure out where everything is after
      * layout, and then to run animations between all of those start/end positions.
      */
-    private void animateRemoval(View viewToRemove) {
+    private void animateRemoval(View viewToRemove, final int swipeDirection) {
         final SwipeListAdapter adapter = getAdapter();
         int firstVisiblePosition = getFirstVisiblePosition();
         for (int i = 0; i < getChildCount(); ++i) {
@@ -211,6 +222,7 @@ public class SwipeListView extends ListView {
         }
         // Delete the item from the adapter
         int position = getPositionForView(viewToRemove);
+        final Object removedItem = adapter.getItem(position);
         adapter.remove(position);
 
         final ViewTreeObserver observer = getViewTreeObserver();
@@ -223,6 +235,14 @@ public class SwipeListView extends ListView {
                     public void run() {
                         backgroundToggle.hideBackground();
                         setEnabled(true);
+                        if (swipeListener == null) {
+                            return;
+                        }
+                        if (swipeDirection == DIRECTION_LEFT) {
+                            swipeListener.onSwipeToTheLeft(removedItem);
+                        } else {
+                            swipeListener.onSwipeToTheRight(removedItem);
+                        }
                     }
                 };
                 for (int i = 0; i < getChildCount(); ++i) {

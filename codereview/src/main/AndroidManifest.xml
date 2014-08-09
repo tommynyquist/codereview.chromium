@@ -1,45 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.chrome.codereview">
+    package="com.chrome.codereview" >
 
-    <supports-screens android:smallScreens="false"
-        android:normalScreens="true"
+    <supports-screens
         android:largeScreens="true"
-        android:xlargeScreens="true"/>
+        android:normalScreens="true"
+        android:smallScreens="false"
+        android:xlargeScreens="true" />
 
     <application
+        android:name=".CodereviewApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:name="com.chrome.codereview.CodereviewApplication"
-        android:theme="@style/AppTheme">
-
+        android:theme="@style/AppTheme" >
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name="com.chrome.codereview.LoginActivity"
+            android:name=".LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_code_review_login" />
         <activity
             android:name=".UserIssuesActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name="com.chrome.codereview.phone.IssueDetailActivity"
+            android:name=".phone.IssueDetailActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_issues"></activity>
-
+            android:label="@string/title_activity_issues" />
         <activity
             android:name=".DiffActivity"
             android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <provider
+            android:name=".data.IssueStateProvider"
+            android:authorities="com.chromium.codereview.issue.state"
+            android:enabled="true"
+            android:exported="false" >
+        </provider>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
