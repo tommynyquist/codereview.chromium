@@ -60,6 +60,8 @@
     <string name="try_bots_success">Succeed on all bots</string>
 
     <string name="swipe_background_text_to_left">WAIT TILL UPDATE!</string>
+    <string name="swipe_background_text_to_right">HIDE FOREVER!</string>
+
 
     <plurals name="year">
         <item quantity="one">year</item>

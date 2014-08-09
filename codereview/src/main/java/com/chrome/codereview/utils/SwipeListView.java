@@ -20,25 +20,30 @@ import java.util.HashMap;
  */
 public class SwipeListView extends ListView {
 
-    private static final int SWIPE_DURATION = 250;
-    private static final int MOVE_DURATION = 150;
-
     public interface BackgroundToggle {
 
-        void showBackground(int top, int bottom);
+        void showBackground(int top, int bottom, int swipeDirection);
+
+        void changeDirection(int swipeDirection);
 
         void hideBackground();
     }
 
-    private final static int UNKNOWN = -1;
-    private final static int SWIPE = -2;
-    private final static int NOT_SWIPE = -3;
+    public static final int DIRECTION_LEFT = 1;
+    public static final int DIRECTION_RIGHT = 2;
+
+    private static final int SWIPE_DURATION = 250;
+    private static final int MOVE_DURATION = 150;
+
+    private static final int UNKNOWN = -1;
+    private static final int SWIPE = -2;
+    private static final int NOT_SWIPE = -3;
 
     private float downX;
     private int swipeSlop = -1;
     private int state = UNKNOWN;
+    private int swipeDirection = 0;
     private BackgroundToggle backgroundToggle;
-
     public SwipeListView(Context context) {
         super(context);
         init();
@@ -100,9 +105,9 @@ public class SwipeListView extends ListView {
         }
 
         float deltaX = event.getX() - downX;
+        int direction = deltaX >= 0 ? DIRECTION_RIGHT : DIRECTION_LEFT;
         float deltaXAbs = Math.abs(deltaX);
         float deltaYAbs = Math.abs(event.getY() - downY);
-
         if (state == UNKNOWN && action == MotionEvent.ACTION_MOVE) {
             if (deltaYAbs > swipeSlop) {
                 state = NOT_SWIPE;
@@ -112,7 +117,8 @@ public class SwipeListView extends ListView {
             if (deltaXAbs > 2 * swipeSlop) {
                 state = SWIPE;
                 requestDisallowInterceptTouchEvent(true);
-                backgroundToggle.showBackground(swipedView.getTop(), swipedView.getHeight());
+                swipeDirection = direction;
+                backgroundToggle.showBackground(swipedView.getTop(), swipedView.getHeight(), direction);
                 return true;
             }
         }
@@ -130,6 +136,10 @@ public class SwipeListView extends ListView {
         int width = swipedView.getWidth();
         if (action == MotionEvent.ACTION_MOVE) {
             setPressedViewState(deltaX, 1 - deltaXAbs / width);
+            if (direction != swipeDirection) {
+                swipeDirection = direction;
+                backgroundToggle.changeDirection(direction);
+            }
             return true;
         }
 

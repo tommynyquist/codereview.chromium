@@ -37,7 +37,9 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
     private int mOpenAreaTop;
     private int mOpenAreaHeight;
     private TextPaint textPaint;
-    private String backgroundText;
+    private String backgroundTextLeft;
+    private String backgroundTextRight;
+    private String currentText;
     boolean mUpdateBounds = false;
     private Rect textBounds;
 
@@ -66,9 +68,8 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
         textPaint.setTextSize(getResources().getDimensionPixelSize(R.dimen.swipe_background_text_size));
         textPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
         textPaint.setAntiAlias(true);
-        backgroundText = resources.getString(R.string.swipe_background_text_to_left);
-        textBounds = new Rect();
-        textPaint.getTextBounds(backgroundText, 0, backgroundText.length(), textBounds);
+        backgroundTextLeft = resources.getString(R.string.swipe_background_text_to_left);
+        backgroundTextRight = resources.getString(R.string.swipe_background_text_to_right);
     }
 
     @Override
@@ -76,12 +77,21 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void showBackground(int top, int bottom) {
+    public void showBackground(int top, int bottom, int direction) {
         setWillNotDraw(false);
         mOpenAreaTop = top;
         mOpenAreaHeight = bottom;
         mShowing = true;
         mUpdateBounds = true;
+        changeDirection(direction);
+    }
+
+    @Override
+    public void changeDirection(int swipeDirection) {
+        currentText = swipeDirection == SwipeListView.DIRECTION_LEFT ? backgroundTextLeft : backgroundTextRight;
+        textBounds = new Rect();
+        textPaint.getTextBounds(currentText, 0, currentText.length(), textBounds);
+        invalidate();
     }
 
     public void hideBackground() {
@@ -98,7 +108,7 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
             canvas.save();
             canvas.translate(0, mOpenAreaTop);
             backgroundDrawable.draw(canvas);
-            canvas.drawText(backgroundText, getWidth() / 2, mOpenAreaHeight / 2 + textBounds.height() / 2, textPaint);
+            canvas.drawText(currentText, getWidth() / 2, mOpenAreaHeight / 2 + textBounds.height() / 2, textPaint);
             canvas.restore();
         }
         super.onDraw(canvas);
