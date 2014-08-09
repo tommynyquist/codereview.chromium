@@ -30,6 +30,10 @@ class UserIssuesAdapter extends BaseAdapter {
     private static final int TYPE_ISSUE = 0;
     private static final int TYPE_GROUP_HEADER = 1;
 
+    public interface onIssueClickListener {
+        void onIssueClicked(Issue issue);
+    }
+
     private static class Box {
 
         Issue issue;
@@ -54,10 +58,19 @@ class UserIssuesAdapter extends BaseAdapter {
     private final LayoutInflater inflater;
     private final Context context;
     private final View.OnTouchListener touchListener;
+    private final View.OnClickListener clickListener;
 
-    public UserIssuesAdapter(Context context, View.OnTouchListener touchListener) {
+    public UserIssuesAdapter(Context context, View.OnTouchListener touchListener, final onIssueClickListener onIssueClickListener) {
         this.context = context;
         this.touchListener = touchListener;
+        clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Integer position = (Integer) v.getTag();
+                Issue issue = boxes.get(position).issue;
+                onIssueClickListener.onIssueClicked(issue);
+            }
+        };
         inflater = LayoutInflater.from(context);
     }
 
@@ -116,6 +129,8 @@ class UserIssuesAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.issue_item, parent, false);
             convertView.setOnTouchListener(touchListener);
+            convertView.setOnClickListener(clickListener);
+            convertView.setTag(position);
         }
         ViewUtils.setText(convertView, R.id.subject, issue.subject());
         ViewUtils.setText(convertView, R.id.owner, issue.owner());

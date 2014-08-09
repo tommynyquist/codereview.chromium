@@ -50,8 +50,17 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
     private UserIssuesAdapter issuesAdapter;
     private IssueSelectionListener selectionListener;
     private boolean selectFirstIssue = false;
-    BackgroundContainer mBackgroundContainer;
+    private BackgroundContainer mBackgroundContainer;
     private ListView listView;
+
+    private UserIssuesAdapter.onIssueClickListener issueClickListener = new UserIssuesAdapter.onIssueClickListener() {
+        @Override
+        public void onIssueClicked(Issue issue) {
+            if (selectionListener != null) {
+                selectionListener.onIssueSelected(issue);
+            }
+        }
+    };
 
     @Override
     public Loader<UserIssues> onCreateLoader(int i, Bundle bundle) {
@@ -93,7 +102,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        issuesAdapter = new UserIssuesAdapter(getActivity(), touchListener);
+        issuesAdapter = new UserIssuesAdapter(getActivity(), touchListener, issueClickListener);
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         listView = (ListView) layout.findViewById(android.R.id.list);
         mBackgroundContainer = (BackgroundContainer) layout.findViewById(R.id.ptr_layout);
@@ -103,14 +112,6 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
     @Override
     protected void refresh() {
         getLoaderManager().restartLoader(0, new Bundle(), UserIssuesFragment.this);
-    }
-
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        Issue issue = issuesAdapter.getItem(position);
-        if (issue != null && selectionListener != null) {
-            selectionListener.onIssueSelected(issue);
-        }
     }
 
     public void selectFirstIssue() {
@@ -130,13 +131,13 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
      */
     private View.OnTouchListener touchListener = new View.OnTouchListener() {
 
-        float mDownX;
-        private int mSwipeSlop = -1;
+        float downX;
+        private int swipeSlop = -1;
 
         @Override
         public boolean onTouch(final View v, MotionEvent event) {
-            if (mSwipeSlop < 0) {
-                mSwipeSlop = ViewConfiguration.get(getActivity()).
+            if (swipeSlop < 0) {
+                swipeSlop = ViewConfiguration.get(getActivity()).
                         getScaledTouchSlop();
             }
             switch (event.getAction()) {
@@ -146,35 +147,38 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                         return false;
                     }
                     mItemPressed = true;
-                    mDownX = event.getX();
-                    break;
+                    downX = event.getX();
+                    return false;
                 case MotionEvent.ACTION_CANCEL:
                     v.setAlpha(1);
                     v.setTranslationX(0);
                     mItemPressed = false;
-                    break;
+                    return false;
                 case MotionEvent.ACTION_MOVE: {
                     float x = event.getX() + v.getTranslationX();
-                    float deltaX = x - mDownX;
+                    float deltaX = x - downX;
                     float deltaXAbs = Math.abs(deltaX);
                     if (!mSwiping) {
-                        if (deltaXAbs > mSwipeSlop) {
+                        if (deltaXAbs > swipeSlop) {
                             mSwiping = true;
                             listView.requestDisallowInterceptTouchEvent(true);
                             mBackgroundContainer.showBackground(v.getTop(), v.getHeight());
+                            return true;
                         }
                     }
                     if (mSwiping) {
-                        v.setTranslationX((x - mDownX));
+                        v.setTranslationX((x - downX));
                         v.setAlpha(1 - deltaXAbs / v.getWidth());
+                        return true;
                     }
+                    return false;
                 }
-                break;
                 case MotionEvent.ACTION_UP: {
                     // User let go - figure out whether to animate the view out, or back into place
+                    mItemPressed = false;
                     if (mSwiping) {
                         float x = event.getX() + v.getTranslationX();
-                        float deltaX = x - mDownX;
+                        float deltaX = x - downX;
                         float deltaXAbs = Math.abs(deltaX);
                         float fractionCovered;
                         float endX;
@@ -217,14 +221,13 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                                         }
                                     }
                                 });
+
+                        return true;
                     }
-                }
-                mItemPressed = false;
-                break;
-                default:
                     return false;
+                }
             }
-            return true;
+            return false;
         }
     };
 
