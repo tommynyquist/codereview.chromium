@@ -1,4 +1,4 @@
-package com.chrome.codereview;
+package com.chrome.codereview.issuelists;
 
 import android.app.LoaderManager;
 import android.content.ContentResolver;
@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.chrome.codereview.BackgroundContainer;
+import com.chrome.codereview.R;
 import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.UserIssues;
@@ -21,30 +23,41 @@ import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.SwipeListView;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
- * Created by sergeyv on 13/4/14.
+ * Created by sergeyv on 10/8/14.
  */
-public class UserIssuesFragment extends BaseListFragment implements LoaderManager.LoaderCallbacks<UserIssues>, SwipeListView.OnSwipeListener {
+public abstract class BaseIssueListFragment extends BaseListFragment implements LoaderManager.LoaderCallbacks<List<Issue>>, SwipeListView.OnSwipeListener {
+
 
     public interface IssueSelectionListener {
         void onIssueSelected(Issue issue);
     }
 
-    private static class IssuesLoader extends CachedLoader<UserIssues> {
+    private static class IssuesLoader extends CachedLoader<List<Issue>> {
 
-        private final String userName;
 
-        public IssuesLoader(Context context, String userName) {
+        private final Callable<List<Issue>> listCallable;
+
+        public IssuesLoader(Context context, Callable<List<Issue>> listCallable) {
             super(context);
-            this.userName = userName;
+            this.listCallable = listCallable;
         }
 
         @Override
-        public UserIssues loadInBackground() {
-            UserIssues userIssues = ServerCaller.from(getContext()).loadIssuesForUser(userName);
+        public List<Issue> loadInBackground() {
+            List<Issue> issues;
+            try {
+                issues = listCallable.call();
+            } catch (Exception e) {
+                issues = new ArrayList<Issue>();
+                e.printStackTrace();
+            }
             Cursor cursor = getContext().getContentResolver().query(IssueStateProvider.HIDDEN_ISSUES_URI, null, null, null, null);
-            SparseArray<Long> idToModificationTime  = new SparseArray<Long>();
+            SparseArray<Long> idToModificationTime = new SparseArray<Long>();
             int columnId = cursor.getColumnIndex(IssueStateProvider.COLUMN_ISSUE_ID);
             int columnModification = cursor.getColumnIndex(IssueStateProvider.COLUMN_MODIFICATION_TIME);
             while (cursor.moveToNext()) {
@@ -53,12 +66,14 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
                 idToModificationTime.put(issueId, lastModification);
             }
             cursor.close();
-            userIssues.filter(idToModificationTime);
-            return userIssues;
+            return filterList(issues, idToModificationTime);
         }
+
+
     }
 
-    private UserIssuesAdapter issuesAdapter;
+
+    private IssuesAdapter issuesAdapter;
     private IssueSelectionListener selectionListener;
     private boolean selectFirstIssue = false;
 
@@ -71,14 +86,14 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
     }
 
     @Override
-    public Loader<UserIssues> onCreateLoader(int i, Bundle bundle) {
+    public Loader<List<Issue>> onCreateLoader(int i, Bundle bundle) {
         startProgress();
-        return new IssuesLoader(this.getActivity(), ServerCaller.from(getActivity()).getAccountName());
+        return new IssuesLoader(this.getActivity(), getLoadAction());
     }
 
     @Override
-    public void onLoadFinished(Loader<UserIssues> listLoader, UserIssues issues) {
-        issuesAdapter.setUserIssues(issues);
+    public void onLoadFinished(Loader<List<Issue>> listLoader, List<Issue> issues) {
+        issuesAdapter.setIssues(issues);
         stopProgress();
         setListAdapter(issuesAdapter);
         if (!selectFirstIssue) {
@@ -98,9 +113,16 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         }
     }
 
+
+    public abstract Callable<List<Issue>> getLoadAction();
+
+    public IssuesAdapter getIssuesAdapter() {
+        return new IssuesAdapter(getActivity());
+    }
+
     @Override
-    public void onLoaderReset(Loader<UserIssues> listLoader) {
-        issuesAdapter.setUserIssues(null);
+    public void onLoaderReset(Loader<List<Issue>> listLoader) {
+        issuesAdapter.setIssues(null);
     }
 
     @Override
@@ -110,7 +132,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        issuesAdapter = new UserIssuesAdapter(getActivity());
+        issuesAdapter = getIssuesAdapter();
         View layout = super.onCreateView(inflater, container, savedInstanceState);
         SwipeListView listView = (SwipeListView) layout.findViewById(android.R.id.list);
         listView.setSwipeListener(this);
@@ -121,7 +143,7 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
 
     @Override
     protected void refresh() {
-        getLoaderManager().restartLoader(0, new Bundle(), UserIssuesFragment.this);
+        getLoaderManager().restartLoader(0, new Bundle(), BaseIssueListFragment.this);
     }
 
     public void selectFirstIssue() {
@@ -140,10 +162,20 @@ public class UserIssuesFragment extends BaseListFragment implements LoaderManage
         Issue issue = (Issue) item;
         ContentValues values = new ContentValues();
         values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
-        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime() );
+        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime());
         ContentResolver contentResolver = getActivity().getContentResolver();
         contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }
 
+    private static List<Issue> filterList(List<Issue> list, SparseArray<Long> idToModificationTime) {
+        List<Issue> result = new ArrayList<Issue>();
+        for (Issue issue : list) {
+            long lastSavedModification = idToModificationTime.get(issue.id(), 1l);
+            if (issue.lastModified().getTime() > lastSavedModification) {
+                result.add(issue);
+            }
+        }
+        return result;
+    }
 
 }

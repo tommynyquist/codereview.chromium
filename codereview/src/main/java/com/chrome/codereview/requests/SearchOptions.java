@@ -32,12 +32,12 @@ public class SearchOptions {
         private String reviewer;
         private String cc;
 
-        Builder owner(String owner) {
+        public Builder owner(String owner) {
             this.owner = owner;
             return this;
         }
 
-        Builder closeState(CloseState state) {
+        public Builder closeState(CloseState state) {
             if (state == null) {
                 throw new IllegalArgumentException();
             }
@@ -45,22 +45,22 @@ public class SearchOptions {
             return this;
         }
 
-        Builder withMessages() {
+        public Builder withMessages() {
             this.withMessages = true;
             return this;
         }
 
-        Builder reviewer(String reviewer) {
+        public Builder reviewer(String reviewer) {
             this.reviewer = reviewer;
             return this;
         }
 
-        Builder cc(String cc) {
+        public Builder cc(String cc) {
             this.cc = cc;
             return this;
         }
 
-        SearchOptions create() {
+        public SearchOptions create() {
             return new SearchOptions(owner, closeState, withMessages, reviewer, cc);
         }
 

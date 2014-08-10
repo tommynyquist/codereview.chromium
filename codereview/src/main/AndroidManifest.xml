@@ -22,15 +22,7 @@
             android:name=".LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_code_review_login" />
-        <activity
-            android:name=".UserIssuesActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".phone.IssueDetailActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -45,6 +37,17 @@
             android:enabled="true"
             android:exported="false" >
         </provider>
+
+        <activity
+            android:name=".UserIssueActivityWithDrawer"
+            android:label="@string/title_activity_user_issue_activity_with_drawer"
+            android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
