@@ -178,9 +178,7 @@ public class SwipeListView extends ListView {
             // back at an appropriate speed.
             long duration = (int) ((1 - fractionCovered) * SWIPE_DURATION);
             setEnabled(false);
-            ViewPropertyAnimator animator = swipedView.animate().setDuration(duration).
-                    alpha(endAlpha).translationX(endX);
-            ViewUtils.onAnimationEnd(animator, new Runnable() {
+            Runnable onEnd = new Runnable() {
                 @Override
                 public void run() {
                     // Restore animated values
@@ -193,8 +191,14 @@ public class SwipeListView extends ListView {
                     }
                     swipedView = null;
                 }
-            });
-
+            };
+            if (duration > 0) {
+                ViewPropertyAnimator animator = swipedView.animate().setDuration(duration).
+                        alpha(endAlpha).translationX(endX);
+                ViewUtils.onAnimationEnd(animator, onEnd);
+            } else {
+                onEnd.run();
+            }
             return true;
         }
         return super.onTouchEvent(event);

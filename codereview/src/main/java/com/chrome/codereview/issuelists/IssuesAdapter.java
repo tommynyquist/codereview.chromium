@@ -44,6 +44,7 @@ public class IssuesAdapter extends SwipeListAdapter {
     @Override
     public void remove(int position) {
         issues.remove(position);
+        notifyDataSetChanged();
     }
 
     @Override

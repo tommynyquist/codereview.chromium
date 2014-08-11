@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.chrome.codereview.issuelists.BaseIssueListFragment;
 import com.chrome.codereview.issuelists.CCIssuesFragment;
+import com.chrome.codereview.issuelists.HiddenIssuesFragment;
 import com.chrome.codereview.issuelists.IncomingIssuesFragment;
 import com.chrome.codereview.issuelists.OutgoingIssuesFragment;
 import com.chrome.codereview.issuelists.RecentlyClosedIssuesFragment;
@@ -24,7 +25,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    private NavigationDrawerFragment mNavigationDrawerFragment;
+    private NavigationDrawerFragment navigationDrawerFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -71,6 +72,9 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
             case 3:
                 fragment = new RecentlyClosedIssuesFragment();
                 break;
+            case 4:
+                fragment = new HiddenIssuesFragment();
+                break;
             default:
                 throw new IllegalArgumentException("Impossible position " + position);
         }
@@ -94,7 +98,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        if (!navigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
@@ -139,12 +143,11 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
     private void initializeViews() {
         setContentView(R.layout.activity_user_issue_activity_with_drawer);
 
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
+        navigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
-
         // Set up the drawer.
-        mNavigationDrawerFragment.setUp(R.id.navigation_drawer,(DrawerLayout) findViewById(R.id.drawer_layout));
+        navigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
 
     }
 

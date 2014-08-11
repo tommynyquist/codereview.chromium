@@ -61,8 +61,13 @@ public class IssueStateProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not supported");
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        switch (URI_MATCHER.match(uri)) {
+            case HIDDEN_CODE:
+                return database.delete(HIDDEN_TABLE, selection, selectionArgs);
+        }
+
+        throw new IllegalArgumentException("Unknown uri " + uri);
     }
 
     @Override
@@ -105,4 +110,6 @@ public class IssueStateProvider extends ContentProvider {
                       String[] selectionArgs) {
         throw new UnsupportedOperationException("Update is not supported");
     }
+
+
 }

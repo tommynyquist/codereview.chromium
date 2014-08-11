@@ -104,7 +104,8 @@ public class NavigationDrawerFragment extends Fragment {
                         getString(R.string.drawer_incoming_reviews),
                         getString(R.string.drawer_outgoing_reviews),
                         getString(R.string.drawer_cc_reviews),
-                        getString(R.string.drawer_recently_closed_reviews)
+                        getString(R.string.drawer_recently_closed_reviews),
+                        getString(R.string.drawer_hidden_reviews)
                 }));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;

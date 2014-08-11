@@ -84,6 +84,8 @@
     <string name="drawer_outgoing_reviews">Outgoing reviews</string>
     <string name="drawer_cc_reviews">CC\'d reviews</string>
     <string name="drawer_recently_closed_reviews">Recently closed</string>
+    <string name="drawer_hidden_reviews">Hidden reviews</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 

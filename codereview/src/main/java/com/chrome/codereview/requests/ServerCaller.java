@@ -16,7 +16,6 @@ import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PublishData;
-import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -49,6 +48,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -130,7 +130,30 @@ public class ServerCaller {
         if (chromiumAccount == null) {
             return null;
         }
-        return chromiumAccount.name;
+        return "pfeldman@chromium.org";
+//        return chromiumAccount.name;
+    }
+
+    public List<Issue> loadIssuesForUser(String accountName) {
+        if (accountName == null) {
+            return null;
+        }
+        Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
+        Future<List<Issue>> futureCcIssues = service.submit(createSearchCallable(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
+        Future<List<Issue>> futureOnReviewIssues = service.submit(createSearchCallable(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
+        try {
+            List<Issue> mineIssues = futureMineIssues.get();
+            List<Issue> ccIssues = futureCcIssues.get();
+            List<Issue> onReviewIssues = futureOnReviewIssues.get();
+            mineIssues.addAll(ccIssues);
+            mineIssues.addAll(onReviewIssues);
+            return mineIssues;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<Issue>();
     }
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {
@@ -242,7 +265,7 @@ public class ServerCaller {
             }
 
             List<PatchSet> patchSets = new ArrayList<PatchSet>();
-            for (Future<PatchSet> future: futures) {
+            for (Future<PatchSet> future : futures) {
                 PatchSet patchSet = future.get();
                 if (patchSet != null) {
                     patchSets.add(patchSet);
