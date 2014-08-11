@@ -20,7 +20,7 @@ public class IssueStateProvider extends ContentProvider {
             HIDDEN_TABLE + " " +                      // Table's name
             "(" +                           // The columns in the table
             " _ID INTEGER PRIMARY KEY, " +
-            COLUMN_ISSUE_ID + " INTEGER," +
+            COLUMN_ISSUE_ID + " INTEGER UNIQUE," +
             COLUMN_MODIFICATION_TIME + " INTEGER" +
             ")";
 
@@ -64,7 +64,9 @@ public class IssueStateProvider extends ContentProvider {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         switch (URI_MATCHER.match(uri)) {
             case HIDDEN_CODE:
-                return database.delete(HIDDEN_TABLE, selection, selectionArgs);
+                int deleted = database.delete(HIDDEN_TABLE, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(HIDDEN_ISSUES_URI, null);
+                return deleted;
         }
 
         throw new IllegalArgumentException("Unknown uri " + uri);
@@ -80,7 +82,8 @@ public class IssueStateProvider extends ContentProvider {
         SQLiteDatabase database = dbHelper.getWritableDatabase();
         switch (URI_MATCHER.match(uri)) {
             case HIDDEN_CODE:
-                database.insert(HIDDEN_TABLE, null, values);
+                database.insertWithOnConflict(HIDDEN_TABLE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(HIDDEN_ISSUES_URI, null);
                 return uri;
         }
 
@@ -99,7 +102,9 @@ public class IssueStateProvider extends ContentProvider {
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         switch (URI_MATCHER.match(uri)) {
             case HIDDEN_CODE:
-                return database.query(HIDDEN_TABLE, projection, selection, selectionArgs, null, null, null);
+                Cursor cursor = database.query(HIDDEN_TABLE, projection, selection, selectionArgs, null, null, null);
+                cursor.setNotificationUri(getContext().getContentResolver(), HIDDEN_ISSUES_URI);
+                return cursor;
         }
 
         throw new IllegalArgumentException("Unknown uri " + uri);
