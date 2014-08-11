@@ -31,6 +31,7 @@ public class SearchOptions {
         private boolean withMessages = false;
         private String reviewer;
         private String cc;
+        private int limit = 1000;
 
         public Builder owner(String owner) {
             this.owner = owner;
@@ -60,8 +61,13 @@ public class SearchOptions {
             return this;
         }
 
+        public Builder limit(int limit) {
+            this.limit = limit;
+            return this;
+        }
+
         public SearchOptions create() {
-            return new SearchOptions(owner, closeState, withMessages, reviewer, cc);
+            return new SearchOptions(owner, closeState, withMessages, reviewer, cc, limit);
         }
 
     }
@@ -71,13 +77,15 @@ public class SearchOptions {
     private final boolean withMessages;
     private final String reviewer;
     private final String cc;
+    private final int limit;
 
-    public SearchOptions(String owner, CloseState closeState, boolean withMessages, String reviewer, String cc) {
+    public SearchOptions(String owner, CloseState closeState, boolean withMessages, String reviewer, String cc, int limit) {
         this.owner = owner;
         this.closeState = closeState;
         this.withMessages = withMessages;
         this.reviewer = reviewer;
         this.cc = cc;
+        this.limit = limit;
     }
 
     public void fillParameters(Uri.Builder builder) {
@@ -101,6 +109,11 @@ public class SearchOptions {
             builder.appendQueryParameter("cc", cc);
         }
 
+        if (cc != null) {
+            builder.appendQueryParameter("cc", cc);
+        }
+
+        builder.appendQueryParameter("limit", limit + "");
     }
 
 }

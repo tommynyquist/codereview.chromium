@@ -14,11 +14,13 @@ import java.util.concurrent.Callable;
  */
 public class RecentlyClosedIssuesFragment extends BaseIssueListFragment{
 
+    private static final int LIMIT = 15;
+
     @Override
     public Callable<List<Issue>> getLoadAction() {
         ServerCaller serverCaller = ServerCaller.from(getActivity());
         String accountName = serverCaller.getAccountName();
-        SearchOptions searchOptions = new SearchOptions.Builder().owner(accountName).closeState(SearchOptions.CloseState.CLOSED).withMessages().create();
+        SearchOptions searchOptions = new SearchOptions.Builder().owner(accountName).closeState(SearchOptions.CloseState.CLOSED).withMessages().limit(LIMIT).create();
         return serverCaller.createSearchCallable(searchOptions);
     }
 
