@@ -47,6 +47,9 @@ public class SwipeListView extends ListView {
     private int state = UNKNOWN;
     private int swipeDirection = 0;
     private BackgroundToggle backgroundToggle;
+    private HashMap<Long, Integer> itemIdTopMap = new HashMap<Long, Integer>();
+    private View swipedView = null;
+    private float downY;
 
     private OnSwipeListener swipeListener;
 
@@ -64,11 +67,6 @@ public class SwipeListView extends ListView {
         super(context, attrs, defStyle);
         init();
     }
-
-    private HashMap<Long, Integer> itemIdTopMap = new HashMap<Long, Integer>();
-    private View swipedView = null;
-    private float downY;
-
 
     public void setSwipeListener(OnSwipeListener swipeListener) {
         this.swipeListener = swipeListener;
@@ -177,6 +175,15 @@ public class SwipeListView extends ListView {
             // velocity (via the VelocityTracker class) to send the item off or
             // back at an appropriate speed.
             long duration = (int) ((1 - fractionCovered) * SWIPE_DURATION);
+            //Since I stole events from usual listView, it stucks in a bad state:
+            //after all out actions listview has mTouchMode != TOUCH_MODE_REST
+            //but this hack return list to normal state.
+            //Maybe in a future we should implement our logic in the onInterceptTouch instead of
+            //onTouch...But onInterceptTouch has very complicated contract and everything why
+            //we need it - sending canceled events.
+            MotionEvent fakeEvent = MotionEvent.obtain(event);
+            fakeEvent.setAction(MotionEvent.ACTION_CANCEL);
+            super.onTouchEvent(fakeEvent);
             setEnabled(false);
             Runnable onEnd = new Runnable() {
                 @Override

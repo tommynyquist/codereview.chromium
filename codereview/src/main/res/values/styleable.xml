@@ -4,6 +4,5 @@
         <attr name="textOnLeftSwipe" format="string"/>
         <attr name="textOnRightSwipe" format="string"/>
     </declare-styleable>
-    
-    
+
 </resources>
