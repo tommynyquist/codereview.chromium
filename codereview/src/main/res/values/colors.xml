@@ -34,5 +34,6 @@
 
     <color name="selected_bg">#f8f8f8f8</color>
     <color name="diff_no_line">#eee</color>
+    <color name="background_holo_light">#fff3f3f3</color>
 
 </resources>
