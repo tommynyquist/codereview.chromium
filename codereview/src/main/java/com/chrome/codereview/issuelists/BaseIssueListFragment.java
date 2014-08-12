@@ -66,6 +66,7 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
     private boolean selectFirstIssue = false;
     private List<Issue> issues;
     private SparseArray<Long> idToModificationTime;
+    private boolean wasInited;
 
     private LoaderManager.LoaderCallbacks<Cursor> cursorLoaderCallbacks = new LoaderManager.LoaderCallbacks<Cursor>() {
         @Override
@@ -102,6 +103,7 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
         @Override
         public void onLoadFinished(Loader<List<Issue>> listLoader, List<Issue> issues) {
             stopProgress();
+            wasInited = true;
             BaseIssueListFragment.this.issues = issues;
             resetAdapter();
         }
@@ -130,7 +132,7 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         boolean refresh = false;
-        if (issuesAdapter == null) {
+        if (!wasInited) {
             refresh = true;
             issuesAdapter = getIssuesAdapter();
         }
