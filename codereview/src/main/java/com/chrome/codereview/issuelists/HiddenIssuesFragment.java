@@ -1,11 +1,10 @@
 package com.chrome.codereview.issuelists;
 
-import android.content.Context;
 import android.util.SparseArray;
 
+import com.chrome.codereview.R;
 import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Issue;
-import com.chrome.codereview.requests.SearchOptions;
 import com.chrome.codereview.requests.ServerCaller;
 
 import java.util.ArrayList;
@@ -45,5 +44,10 @@ public class HiddenIssuesFragment extends BaseIssueListFragment {
     @Override
     public void swipeIssue(Issue issue, int direction) {
         getActivity().getContentResolver().delete(IssueStateProvider.HIDDEN_ISSUES_URI, IssueStateProvider.COLUMN_ISSUE_ID + "=?", new String[] {issue.id() + ""});
+    }
+
+    @Override
+    protected int getLayoutRes() {
+        return R.layout.hidden_user_issues;
     }
 }

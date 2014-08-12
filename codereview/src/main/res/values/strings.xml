@@ -53,6 +53,7 @@
     <string name="try_bots_success">Succeed on all bots</string>
     <string name="swipe_background_text_to_left">WAIT TILL UPDATE!</string>
     <string name="swipe_background_text_to_right">HIDE FOREVER!</string>
+    <string name="hidden_issues_swipe">BRING IT BACK!</string>
 
     <plurals name="year">
         <item quantity="one">year</item>

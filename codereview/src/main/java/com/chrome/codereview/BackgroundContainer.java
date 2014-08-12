@@ -17,7 +17,7 @@
 package com.chrome.codereview;
 
 import android.content.Context;
-import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -43,23 +43,17 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
     boolean mUpdateBounds = false;
     private Rect textBounds;
 
-    public BackgroundContainer(Context context) {
-        super(context);
-        init();
-    }
-
     public BackgroundContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(attrs);
     }
 
     public BackgroundContainer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init();
+        init(attrs);
     }
 
-    private void init() {
-        Resources resources = getResources();
+    private void init(AttributeSet attrs) {
         backgroundDrawable = getResources().getDrawable(R.drawable.issue_backcontainer_bg);
         textPaint = new TextPaint();
         textPaint.setColor(Color.WHITE);
@@ -68,8 +62,10 @@ public class BackgroundContainer extends PullToRefreshLayout implements SwipeLis
         textPaint.setTextSize(getResources().getDimensionPixelSize(R.dimen.swipe_background_text_size));
         textPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
         textPaint.setAntiAlias(true);
-        backgroundTextLeft = resources.getString(R.string.swipe_background_text_to_left);
-        backgroundTextRight = resources.getString(R.string.swipe_background_text_to_right);
+
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.BackgroundContainer);
+        backgroundTextLeft = typedArray.getString(R.styleable.BackgroundContainer_textOnLeftSwipe);
+        backgroundTextRight = typedArray.getString(R.styleable.BackgroundContainer_textOnRightSwipe);
     }
 
     @Override
