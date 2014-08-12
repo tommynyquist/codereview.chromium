@@ -6,6 +6,7 @@ import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -22,6 +23,8 @@ import com.chrome.codereview.requests.ServerCaller;
 
 public class UserIssueActivityWithDrawer extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
+    private static Class[] ISSUE_FRAGMENTS = new Class[] {IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
+
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -32,6 +35,8 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
      */
     private CharSequence mTitle;
     private static final int REQUEST_LOGIN = 1;
+
+    private SparseArray<BaseIssueListFragment> fragments = new SparseArray<BaseIssueListFragment>();
 
     private class PhoneIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
 
@@ -58,26 +63,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
-        BaseIssueListFragment fragment;
-        switch (position) {
-            case 0:
-                fragment = new IncomingIssuesFragment();
-                break;
-            case 1:
-                fragment = new OutgoingIssuesFragment();
-                break;
-            case 2:
-                fragment = new CCIssuesFragment();
-                break;
-            case 3:
-                fragment = new RecentlyClosedIssuesFragment();
-                break;
-            case 4:
-                fragment = new HiddenIssuesFragment();
-                break;
-            default:
-                throw new IllegalArgumentException("Impossible position " + position);
-        }
+        BaseIssueListFragment fragment = getFragment(position);
         initIssueDetailsFragment();
         fragment.setIssueSelectionListener(issueDetailsFragment == null ? new PhoneIssueSelectionListener() : new TabletIssueSelectionListener());
         if (issueDetailsFragment != null) {
@@ -155,6 +141,20 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         if (issueDetailsFragment == null) {
             issueDetailsFragment = (IssueDetailsFragment) getFragmentManager().findFragmentById(R.id.issue_details);
         }
+    }
+
+    private BaseIssueListFragment getFragment(int position) {
+        BaseIssueListFragment result = fragments.get(position);
+        if (result == null) {
+            Class cl = ISSUE_FRAGMENTS[position];
+            try {
+                result = (BaseIssueListFragment) cl.newInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            fragments.put(position, result);
+        }
+        return result;
     }
 
 }

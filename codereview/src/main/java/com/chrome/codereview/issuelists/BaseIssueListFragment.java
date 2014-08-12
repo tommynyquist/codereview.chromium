@@ -97,8 +97,6 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
 
         @Override
         public void onLoaderReset(Loader<List<Issue>> listLoader) {
-            issues = null;
-            issuesAdapter.setIssues(null);
         }
 
         @Override
@@ -131,20 +129,24 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        issuesAdapter = getIssuesAdapter();
+        boolean refresh = false;
+        if (issuesAdapter == null) {
+            refresh = true;
+            issuesAdapter = getIssuesAdapter();
+        }
+        getLoaderManager().restartLoader(CURSOR_LOADER, new Bundle(), cursorLoaderCallbacks);
         setListAdapter(issuesAdapter);
-        View layout = super.onCreateView(inflater, container, savedInstanceState);
+        View layout = super.onCreateView(inflater, container, savedInstanceState, refresh);
         SwipeListView listView = (SwipeListView) layout.findViewById(android.R.id.list);
         listView.setSwipeListener(this);
-        BackgroundContainer mBackgroundContainer = (BackgroundContainer) layout.findViewById(R.id.ptr_layout);
-        listView.setBackgroundToggle(mBackgroundContainer);
-        getLoaderManager().restartLoader(CURSOR_LOADER, new Bundle(), this.cursorLoaderCallbacks);
+        BackgroundContainer backgroundContainer = (BackgroundContainer) layout.findViewById(R.id.ptr_layout);
+        listView.setBackgroundToggle(backgroundContainer);
         return layout;
     }
 
     @Override
     protected void refresh() {
-        getLoaderManager().restartLoader(ISSUES_LOADER, new Bundle(), this.issuesLoadedCallback);
+        getLoaderManager().restartLoader(ISSUES_LOADER, new Bundle(), issuesLoadedCallback);
     }
 
     public void selectFirstIssue() {
