@@ -164,8 +164,7 @@ public class ServerCaller {
     private void initChromiumAccount() {
         AccountManager accountManager = AccountManager.get(context);
         Account[] accounts = accountManager.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
-        String[] names = new String[accounts.length];
-        for (int i = 0; i < names.length; i++) {
+        for (int i = 0; i < accounts.length; i++) {
             if (accounts[i].name.endsWith(CHROMIUM_EMAIL)) {
                 chromiumAccount = accounts[i];
             }

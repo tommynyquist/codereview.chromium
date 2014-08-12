@@ -3,7 +3,6 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="list_item_horizontal_padding">16dp</dimen>
     <dimen name="pace">8dp</dimen>
     <dimen name="half_pace">4dp</dimen>
     <dimen name="double_pace">16dp</dimen>
