@@ -21,6 +21,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.chrome.codereview.requests.ServerCaller;
+import com.chrome.codereview.utils.EmailUtils;
+
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
@@ -100,13 +103,7 @@ public class NavigationDrawerFragment extends Fragment {
                 getActionBar().getThemedContext(),
                 R.layout.drawer_item,
                 android.R.id.text1,
-                new String[]{
-                        getString(R.string.drawer_incoming_reviews),
-                        getString(R.string.drawer_outgoing_reviews),
-                        getString(R.string.drawer_cc_reviews),
-                        getString(R.string.drawer_recently_closed_reviews),
-                        getString(R.string.drawer_hidden_reviews)
-                }));
+                getResources().getStringArray(R.array.drawer_titles)));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -258,7 +255,8 @@ public class NavigationDrawerFragment extends Fragment {
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setTitle(R.string.app_name);
+        String userName = EmailUtils.retrieveAccountName(ServerCaller.from(getActivity()).getAccountName());
+        actionBar.setTitle(getString(R.string.navigation_drawer_title, userName));
     }
 
     private ActionBar getActionBar() {

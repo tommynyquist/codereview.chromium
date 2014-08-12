@@ -79,13 +79,15 @@
         <item quantity="other">minutes</item>
     </plurals>
 
-    <string name="title_activity_user_issue_activity_with_drawer">UserIssueActivityWithDrawer</string>
-    <string name="drawer_incoming_reviews">Incoming reviews</string>
-    <string name="drawer_outgoing_reviews">Outgoing reviews</string>
-    <string name="drawer_cc_reviews">CC\'d reviews</string>
-    <string name="drawer_recently_closed_reviews">Recently closed</string>
-    <string name="drawer_hidden_reviews">Hidden reviews</string>
+    <string-array name="drawer_titles">
+        <item>Incoming reviews</item>
+        <item>Outgoing reviews</item>
+        <item>CC\'d reviews</item>
+        <item>Recently closed</item>
+        <item>Hidden reviews</item>
+    </string-array>
 
+    <string name="navigation_drawer_title">Codereview for %s</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 

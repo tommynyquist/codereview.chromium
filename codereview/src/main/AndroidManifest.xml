@@ -40,7 +40,6 @@
 
         <activity
             android:name=".UserIssueActivityWithDrawer"
-            android:label="@string/title_activity_user_issue_activity_with_drawer"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

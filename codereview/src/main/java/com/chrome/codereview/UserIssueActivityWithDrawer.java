@@ -23,7 +23,8 @@ import com.chrome.codereview.requests.ServerCaller;
 
 public class UserIssueActivityWithDrawer extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
-    private static Class[] ISSUE_FRAGMENTS = new Class[] {IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
+    private static final Class[] ISSUE_FRAGMENTS = new Class[] {IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
+    private static final int REQUEST_LOGIN = 1;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -33,8 +34,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
-    private CharSequence mTitle;
-    private static final int REQUEST_LOGIN = 1;
+    private IssueDetailsFragment issueDetailsFragment;
 
     private SparseArray<BaseIssueListFragment> fragments = new SparseArray<BaseIssueListFragment>();
 
@@ -56,9 +56,6 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         }
     }
 
-
-    private IssueDetailsFragment issueDetailsFragment;
-
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
@@ -69,6 +66,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         if (issueDetailsFragment != null) {
             fragment.selectFirstIssue();
         }
+        getActionBar().setTitle(getResources().getStringArray(R.array.drawer_titles)[position]);
         fragmentManager.beginTransaction()
                 .replace(R.id.container, fragment)
                 .commit();
@@ -78,7 +76,6 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
     }
 
 
@@ -131,8 +128,6 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
 
         navigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
-        // Set up the drawer.
         navigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
 
     }
