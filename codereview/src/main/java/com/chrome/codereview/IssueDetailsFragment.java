@@ -213,6 +213,9 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
     public void setIssueId(int issueId) {
         this.issueId = issueId;
+        if (issueId == -1) {
+            issueDetailsAdapter.setIssue(null);
+        }
         refresh();
     }
 

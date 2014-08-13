@@ -63,6 +63,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         initIssueDetailsFragment();
         fragment.setIssueSelectionListener(issueDetailsFragment == null ? new PhoneIssueSelectionListener() : new TabletIssueSelectionListener());
         if (issueDetailsFragment != null) {
+            issueDetailsFragment.setIssueId(-1);
             fragment.selectFirstIssue();
         }
         getActionBar().setTitle(getResources().getStringArray(R.array.drawer_titles)[position]);
