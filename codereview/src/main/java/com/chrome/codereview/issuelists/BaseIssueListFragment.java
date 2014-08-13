@@ -35,7 +35,7 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
     private static final int CURSOR_LOADER = 1;
 
     public interface IssueSelectionListener {
-        void onIssueSelected(Issue issue);
+        void onIssueSelected(int issueId, boolean force);
     }
 
     private static class IssuesLoader extends CachedLoader<List<Issue>> {
@@ -67,6 +67,8 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
     private List<Issue> issues;
     private SparseArray<Long> idToModificationTime;
     private boolean wasInited;
+    private int selectedPosition;
+    private int selectedIssuedId;
 
     private LoaderManager.LoaderCallbacks<Cursor> cursorLoaderCallbacks = new LoaderManager.LoaderCallbacks<Cursor>() {
         @Override
@@ -112,10 +114,7 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        Issue issue = issuesAdapter.getItem(position);
-        if (issue != null && selectionListener != null) {
-            selectionListener.onIssueSelected(issue);
-        }
+        selectIssue(position, true);
     }
 
     public abstract Callable<List<Issue>> getLoadAction();
@@ -166,6 +165,18 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
         }
         Issue issue = (Issue) item;
         swipeIssue(issue, direction);
+        if (issue.id() != selectedIssuedId) {
+            return;
+        }
+        int count = issuesAdapter.getCount();
+        if (count == 0) {
+            if (selectionListener != null) {
+                selectionListener.onIssueSelected(-1, false);
+            }
+            return;
+        }
+        int newPosition = selectedPosition < count ? selectedPosition : count - 1;
+        selectIssue(newPosition, false);
     }
 
     public void swipeIssue(Issue issue, int direction) {
@@ -195,20 +206,22 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
             return;
         }
         issuesAdapter.setIssues(filter(issues, idToModificationTime));
-        if (!selectFirstIssue) {
+        if (!selectFirstIssue || issuesAdapter.getCount() == 0) {
             return;
         }
         selectFirstIssue = false;
-        for (int i = 0; i < issuesAdapter.getCount(); i++) {
-            Issue issue = issuesAdapter.getItem(i);
-            if (issue == null) {
-                continue;
-            }
-            getListView().setSelection(i);
-            if (selectionListener != null) {
-                selectionListener.onIssueSelected(issue);
-            }
-            break;
+        selectIssue(0, false);
+    }
+
+    private void selectIssue(int position, boolean force) {
+        if (position >= issuesAdapter.getCount()) {
+            return;
+        }
+        if (selectionListener != null) {
+            selectedPosition = position;
+            Issue issue = issuesAdapter.getItem(position);
+            selectedIssuedId = issue.id();
+            selectionListener.onIssueSelected(issue.id(), force);
         }
     }
 

@@ -15,7 +15,6 @@ import com.chrome.codereview.issuelists.HiddenIssuesFragment;
 import com.chrome.codereview.issuelists.IncomingIssuesFragment;
 import com.chrome.codereview.issuelists.OutgoingIssuesFragment;
 import com.chrome.codereview.issuelists.RecentlyClosedIssuesFragment;
-import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.phone.IssueDetailActivity;
 import com.chrome.codereview.requests.ServerCaller;
 
@@ -24,6 +23,30 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
 
     private static final Class[] ISSUE_FRAGMENTS = new Class[] {IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
     private static final int REQUEST_LOGIN = 1;
+
+    private class PhoneIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
+
+        @Override
+        public void onIssueSelected(int issueId, boolean force) {
+            if (!force) {
+                return;
+            }
+            Intent intent = new Intent(UserIssueActivityWithDrawer.this, IssueDetailActivity.class);
+            intent.putExtra(IssueDetailsFragment.EXTRA_ISSUE_ID, issueId);
+            startActivity(intent);
+        }
+    }
+
+    private class TabletIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
+
+        @Override
+        public void onIssueSelected(int issueId, boolean force) {
+            issueDetailsFragment.setIssueId(issueId);
+            if (issueId == -1) {
+                getActionBar().setTitle(getResources().getStringArray(R.array.drawer_titles)[selectedInDrawer]);
+            }
+        }
+    }
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -37,27 +60,12 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
 
     private SparseArray<BaseIssueListFragment> fragments = new SparseArray<BaseIssueListFragment>();
 
-    private class PhoneIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
-
-        @Override
-        public void onIssueSelected(Issue issue) {
-            Intent intent = new Intent(UserIssueActivityWithDrawer.this, IssueDetailActivity.class);
-            intent.putExtra(IssueDetailsFragment.EXTRA_ISSUE_ID, issue.id());
-            startActivity(intent);
-        }
-    }
-
-    private class TabletIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
-
-        @Override
-        public void onIssueSelected(Issue issue) {
-            issueDetailsFragment.setIssueId(issue.id());
-        }
-    }
+    private int selectedInDrawer = 0;
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
+        selectedInDrawer = position;
         FragmentManager fragmentManager = getFragmentManager();
         BaseIssueListFragment fragment = getFragment(position);
         initIssueDetailsFragment();
