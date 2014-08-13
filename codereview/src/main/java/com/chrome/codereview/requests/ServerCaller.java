@@ -22,12 +22,14 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.loopj.android.http.PersistentCookieStore;
 
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -36,6 +38,8 @@ import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -130,7 +134,7 @@ public class ServerCaller {
         if (chromiumAccount == null) {
             return null;
         }
-        return chromiumAccount.name;
+       return chromiumAccount.name;
     }
 
     public List<Issue> loadIssuesForUser(String accountName) {
@@ -332,9 +336,24 @@ public class ServerCaller {
     }
 
     private String executeRequest(HttpUriRequest request) throws IOException {
+        request.addHeader("Accept-Encoding", "gzip");
+        BasicHttpParams params = new BasicHttpParams();
+        HttpProtocolParams.setUserAgent(params, "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0");
+        request.setParams(params);
         HttpResponse response = httpClient.execute(request, httpContext);
-        String entity = EntityUtils.toString(response.getEntity());
-        return entity;
+        HttpEntity entity = response.getEntity();
+        Header contentEncodingHeader = entity.getContentEncoding();
+        if (contentEncodingHeader != null) {
+            HeaderElement[] encodings = contentEncodingHeader.getElements();
+            for (int i = 0; i < encodings.length; i++) {
+                if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                    entity = new GzipDecompressingEntity(entity);
+                    break;
+                }
+            }
+        }
+        String entityString = EntityUtils.toString(entity);
+        return entityString;
     }
 
     private JSONObject executeGetJSONRequest(Uri uri) throws IOException, JSONException {

@@ -18,6 +18,7 @@ android {
         compile 'com.loopj.android:android-async-http:1.4.4'
         compile 'com.github.castorflex.smoothprogressbar:library:0.5.1'
         compile 'com.github.chrisbanes.actionbarpulltorefresh:library:+'
+        compile 'org.apache.httpcomponents:httpclient-android:4.3.3'
     }
 
     signingConfigs {
