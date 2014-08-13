@@ -4,7 +4,6 @@
     android:id="@+id/description_text"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:autoLink="web"
     android:fontFamily="sans-serif-light"
     android:paddingLeft="12dp"
     android:paddingRight="@dimen/double_pace"

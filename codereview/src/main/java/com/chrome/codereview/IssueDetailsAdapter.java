@@ -47,7 +47,6 @@ class IssueDetailsAdapter extends MergeExpandableListAdapter {
                 convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.description_item, parent, false);
             }
             TextView descriptionView = (TextView) convertView.findViewById(R.id.description_text);
-            descriptionView.setText(description);
             SpannableString spannableDescription = new SpannableString(description);
             Linkify.addLinks(spannableDescription, Linkify.WEB_URLS);
             linkifyBug(description, spannableDescription);

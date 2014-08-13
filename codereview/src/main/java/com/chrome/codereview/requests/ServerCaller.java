@@ -134,7 +134,7 @@ public class ServerCaller {
         if (chromiumAccount == null) {
             return null;
         }
-       return chromiumAccount.name;
+        return chromiumAccount.name;
     }
 
     public List<Issue> loadIssuesForUser(String accountName) {
