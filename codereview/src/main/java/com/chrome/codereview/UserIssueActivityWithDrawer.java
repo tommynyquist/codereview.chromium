@@ -117,7 +117,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         navigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
         navigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
-
+        CleanUpService.scheduleCleanUp(this);
     }
 
     private void initIssueDetailsFragment() {

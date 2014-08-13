@@ -22,7 +22,6 @@
             android:name=".LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_code_review_login" />
-
         <activity
             android:name=".phone.IssueDetailActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -40,12 +39,18 @@
 
         <activity
             android:name=".UserIssueActivityWithDrawer"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".CleanUpService"
+            android:exported="false" >
+        </service>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

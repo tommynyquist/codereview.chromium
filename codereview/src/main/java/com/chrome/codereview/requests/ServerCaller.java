@@ -24,6 +24,7 @@ import com.loopj.android.http.PersistentCookieStore;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -62,6 +63,9 @@ import java.util.concurrent.TimeUnit;
  * Created by sergeyv on 16/4/14.
  */
 public class ServerCaller {
+
+    private static class NotFoundException extends IOException {
+    }
 
     public enum State {
         OK,
@@ -324,6 +328,19 @@ public class ServerCaller {
         executePost(uri, nameValuePairs);
     }
 
+    public boolean isClosedOrDeleted(int issueId) {
+        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").build();
+        try {
+            Issue issue = Issue.fromJSONObject(executeGetJSONRequest(uri));
+            return issue.isClosed();
+        } catch (NotFoundException e) {
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void executePost(Uri uri, List<? extends NameValuePair> parameters) throws IOException {
         HttpPost post = new HttpPost(uri.toString());
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
@@ -336,11 +353,14 @@ public class ServerCaller {
     }
 
     private String executeRequest(HttpUriRequest request) throws IOException {
-        request.addHeader("Accept-Encoding", "gzip");
+        request.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
         BasicHttpParams params = new BasicHttpParams();
         HttpProtocolParams.setUserAgent(params, "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0");
         request.setParams(params);
         HttpResponse response = httpClient.execute(request, httpContext);
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            throw new NotFoundException();
+        }
         HttpEntity entity = response.getEntity();
         Header contentEncodingHeader = entity.getContentEncoding();
         if (contentEncodingHeader != null) {
