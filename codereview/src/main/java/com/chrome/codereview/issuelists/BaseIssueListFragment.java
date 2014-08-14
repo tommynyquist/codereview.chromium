@@ -180,18 +180,17 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
     }
 
     public void swipeIssue(Issue issue, int direction) {
-        ContentValues values = new ContentValues();
-        values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
-        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime());
-        ContentResolver contentResolver = getActivity().getContentResolver();
-        contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
+        long modificationTime = direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime();
+        updateIssueState(issue, modificationTime);
     }
 
     private void initIdToModificationTimeMap(Cursor cursor) {
         if (cursor == null) {
             return;
         }
-        idToModificationTime = new SparseArray<Long>();
+        if (idToModificationTime == null) {
+            idToModificationTime = new SparseArray<Long>();
+        }
         int columnId = cursor.getColumnIndex(IssueStateProvider.COLUMN_ISSUE_ID);
         int columnModification = cursor.getColumnIndex(IssueStateProvider.COLUMN_MODIFICATION_TIME);
         while (cursor.moveToNext()) {
@@ -234,6 +233,14 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
             }
         }
         return result;
+    }
+
+    protected void updateIssueState(Issue issue, long modificationTime) {
+        ContentValues values = new ContentValues();
+        values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
+        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, modificationTime);
+        ContentResolver contentResolver = getActivity().getContentResolver();
+        contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }
 
 }

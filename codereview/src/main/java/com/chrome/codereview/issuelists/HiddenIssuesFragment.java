@@ -3,7 +3,6 @@ package com.chrome.codereview.issuelists;
 import android.util.SparseArray;
 
 import com.chrome.codereview.R;
-import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.requests.ServerCaller;
 
@@ -43,7 +42,7 @@ public class HiddenIssuesFragment extends BaseIssueListFragment {
 
     @Override
     public void swipeIssue(Issue issue, int direction) {
-        getActivity().getContentResolver().delete(IssueStateProvider.HIDDEN_ISSUES_URI, IssueStateProvider.COLUMN_ISSUE_ID + "=?", new String[] {issue.id() + ""});
+        updateIssueState(issue, 0l);
     }
 
     @Override
