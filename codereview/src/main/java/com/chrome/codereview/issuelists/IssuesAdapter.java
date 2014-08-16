@@ -1,7 +1,11 @@
 package com.chrome.codereview.issuelists;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Typeface;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -15,6 +19,7 @@ import android.widget.TextView;
 import com.chrome.codereview.R;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.Reviewer;
+import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.DateUtils;
 import com.chrome.codereview.utils.SwipeListAdapter;
 import com.chrome.codereview.utils.ViewUtils;
@@ -30,10 +35,27 @@ public class IssuesAdapter extends SwipeListAdapter {
     private List<Issue> issues = new ArrayList<Issue>();
     private LayoutInflater inflater;
     private Context context;
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int issueId = intent.getIntExtra(ServerCaller.EXTRA_ISSUE_ID, -1);
+            long time = intent.getLongExtra(ServerCaller.EXTRA_MODIFICATION_TIME, 0l);
+            for (Issue issue: issues) {
+                if (issue.id() == issueId) {
+                    issue.setLastModified(time);
+                    notifyDataSetChanged();
+                    return;
+                }
+            }
+        }
+    };
 
     public IssuesAdapter(Context context) {
         this.context = context;
         inflater = LayoutInflater.from(context);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ServerCaller.ACTION_UPDATE_ISSUE_MODIFICATION_TIME);
+        LocalBroadcastManager.getInstance(context).registerReceiver(receiver, filter);
     }
 
     @Override

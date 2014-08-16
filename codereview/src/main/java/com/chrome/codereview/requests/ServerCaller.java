@@ -3,13 +3,16 @@ package com.chrome.codereview.requests;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 
 import com.chrome.codereview.CodereviewApplication;
+import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.FileDiff;
@@ -51,6 +54,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -75,6 +80,9 @@ public class ServerCaller {
 
     public static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
     public static final Uri SECONDARY_URL = Uri.parse("https://chromiumcodereview.appspot.com");
+    public static final String ACTION_UPDATE_ISSUE_MODIFICATION_TIME = "UPDATE_ISSUE_MODIFICATION_TIME";
+    public static final String EXTRA_ISSUE_ID = "ISSUE_ID";
+    public static final String EXTRA_MODIFICATION_TIME = "MODIFICATION_TIME";
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
@@ -100,6 +108,8 @@ public class ServerCaller {
     private Account chromiumAccount;
     private State state;
     private Context context;
+    private HashSet<Integer> updatingIssues = new HashSet<Integer>();
+    private HashMap<Integer, Long> issueToModification = new HashMap<Integer, Long>();
 
     public ServerCaller(Context context) {
         this.context = context;
@@ -254,8 +264,16 @@ public class ServerCaller {
         return null;
     }
 
-    public Issue loadIssueWithPatchSetData(final int issueId) {
+    public Issue publishAndReloadIssue(final int issueId, PublishData publishData) throws GoogleAuthException, IOException, AuthenticationException {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendQueryParameter("messages", "true").build();
+        synchronized (updatingIssues) {
+            updatingIssues.add(issueId);
+        }
+        if (publishData != null) {
+            publish(publishData);
+        }
+
+        Issue issue = null;
         try {
             JSONObject jsonObject = executeGetJSONRequest(uri);
             JSONArray patchSetsJson = jsonObject.getJSONArray("patchsets");
@@ -277,11 +295,24 @@ public class ServerCaller {
                     patchSets.add(patchSet);
                 }
             }
-            return Issue.fromJSONObject(jsonObject, patchSets);
+            issue = Issue.fromJSONObject(jsonObject, patchSets);
+            Intent intent = new Intent(ACTION_UPDATE_ISSUE_MODIFICATION_TIME);
+            intent.putExtra(EXTRA_ISSUE_ID, issueId);
+            intent.putExtra(EXTRA_MODIFICATION_TIME, issue.lastModified().getTime());
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            synchronized (updatingIssues) {
+                updatingIssues.remove(issueId);
+                if (issueToModification.containsKey(issueId)) {
+                    long modificationTime = issueToModification.remove(issueId);
+                    long newModificationTime = issue != null ? issue.lastModified().getTime() : 0l;
+                    IssueStateProvider.updateIssueState(context, issue.id(), Math.max(modificationTime, newModificationTime));
+                }
+            }
         }
-        return null;
+        return issue;
     }
 
     private List<Issue> search(SearchOptions options) {
@@ -393,6 +424,16 @@ public class ServerCaller {
     private void clearToken() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         preferences.edit().remove(XSRF_TOKEN_PREFERENCE).apply();
+    }
+
+    public void updateIssueState(Issue issue, long modificationTime) {
+        synchronized (updatingIssues) {
+            if (updatingIssues.contains(issue.id())) {
+                issueToModification.put(issue.id(), modificationTime);
+                return;
+            }
+            IssueStateProvider.updateIssueState(context, issue.id(), modificationTime);
+        }
     }
 
 }

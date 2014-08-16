@@ -1,8 +1,6 @@
 package com.chrome.codereview.issuelists;
 
 import android.app.LoaderManager;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
@@ -18,6 +16,7 @@ import com.chrome.codereview.BackgroundContainer;
 import com.chrome.codereview.R;
 import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Issue;
+import com.chrome.codereview.requests.ServerCaller;
 import com.chrome.codereview.utils.BaseListFragment;
 import com.chrome.codereview.utils.CachedLoader;
 import com.chrome.codereview.utils.SwipeListView;
@@ -181,7 +180,9 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
 
     public void swipeIssue(Issue issue, int direction) {
         long modificationTime = direction == SwipeListView.DIRECTION_RIGHT ? Long.MAX_VALUE : issue.lastModified().getTime();
-        updateIssueState(issue, modificationTime);
+        //This is a temporary value, serverCaller will trigger db update, and thus CursorLoader will requery new data, so this valus will be written
+        idToModificationTime.put(issue.id(), Long.MAX_VALUE);
+        ServerCaller.from(getActivity()).updateIssueState(issue, modificationTime);
     }
 
     private void initIdToModificationTimeMap(Cursor cursor) {
@@ -233,14 +234,6 @@ public abstract class BaseIssueListFragment extends BaseListFragment implements 
             }
         }
         return result;
-    }
-
-    protected void updateIssueState(Issue issue, long modificationTime) {
-        ContentValues values = new ContentValues();
-        values.put(IssueStateProvider.COLUMN_ISSUE_ID, issue.id());
-        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, modificationTime);
-        ContentResolver contentResolver = getActivity().getContentResolver();
-        contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.chrome.codereview.data;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
@@ -114,6 +115,14 @@ public class IssueStateProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
         throw new UnsupportedOperationException("Update is not supported");
+    }
+
+    public static void updateIssueState(Context context, int issueId, long modificationTime) {
+        ContentValues values = new ContentValues();
+        values.put(IssueStateProvider.COLUMN_ISSUE_ID, issueId);
+        values.put(IssueStateProvider.COLUMN_MODIFICATION_TIME, modificationTime);
+        ContentResolver contentResolver = context.getContentResolver();
+        contentResolver.insert(IssueStateProvider.HIDDEN_ISSUES_URI, values);
     }
 
 

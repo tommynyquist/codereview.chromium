@@ -42,46 +42,33 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
     public static final int REQUEST_CODE_DIFF = 1;
 
     private static final int ISSUE_LOADER_ID = 0;
-    private static final int PUBLISH_LOADER_ID = 1;
     private static final int COMMIT_LOADER_ID = 2;
     private static final String PUBLISH_DATA_ARG = "publishData";
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
         private int issueId;
+        private final PublishData publishData;
 
-        public IssueLoader(Context context, int issueId) {
+        public IssueLoader(Context context, int issueId, PublishData publishData) {
             super(context);
             this.issueId = issueId;
-        }
-
-        @Override
-        public Issue loadInBackground() {
-            return serverCaller().loadIssueWithPatchSetData(issueId);
-        }
-    }
-
-    private static class PublishLoader extends CachedLoader<Boolean> {
-
-        private PublishData publishData;
-
-        public PublishLoader(Context context, PublishData publishData) {
-            super(context);
             this.publishData = publishData;
         }
 
         @Override
-        public Boolean loadInBackground() {
+        public Issue loadInBackground() {
+            Issue issue = null;
             try {
-                serverCaller().publish(publishData);
-            } catch (IOException e) {
-                e.printStackTrace();
+                issue = serverCaller().publishAndReloadIssue(issueId, publishData);
             } catch (GoogleAuthException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             } catch (AuthenticationException e) {
                 e.printStackTrace();
             }
-            return true;
+            return issue;
         }
     }
 
@@ -119,7 +106,9 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         public Loader<Issue> onCreateLoader(int id, Bundle args) {
             enableMenuButtons(false);
             startProgress();
-            return new IssueLoader(getActivity(), issueId);
+
+            PublishData publishData = args != null ? (PublishData) args.getParcelable(PUBLISH_DATA_ARG) : null;
+            return new IssueLoader(getActivity(), issueId, publishData);
         }
 
         @Override
@@ -140,26 +129,6 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         public void onLoaderReset(Loader<Issue> loader) {
             issue = null;
             issueDetailsAdapter.setIssue(null);
-        }
-    };
-
-    private LoaderManager.LoaderCallbacks<Boolean> publishLoaderCallback = new LoaderManager.LoaderCallbacks<Boolean>() {
-
-        @Override
-        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
-            enableMenuButtons(false);
-            startProgress();
-            return new PublishLoader(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Boolean> loader, Boolean v) {
-            enableMenuButtons(true);
-            getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Boolean> loader) {
         }
     };
 
@@ -248,7 +217,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         PublishData publishData = new PublishData(issueId, message, subject, cc, reviewers);
         Bundle bundle = new Bundle();
         bundle.putParcelable(PUBLISH_DATA_ARG, publishData);
-        getLoaderManager().restartLoader(PUBLISH_LOADER_ID, bundle, this.publishLoaderCallback);
+        getLoaderManager().restartLoader(ISSUE_LOADER_ID, bundle, this.issueLoaderCallback);
     }
 
     @Override
