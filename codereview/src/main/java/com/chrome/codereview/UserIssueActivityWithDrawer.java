@@ -15,7 +15,6 @@ import com.chrome.codereview.issuelists.HiddenIssuesFragment;
 import com.chrome.codereview.issuelists.IncomingIssuesFragment;
 import com.chrome.codereview.issuelists.OutgoingIssuesFragment;
 import com.chrome.codereview.issuelists.RecentlyClosedIssuesFragment;
-import com.chrome.codereview.phone.IssueDetailActivity;
 import com.chrome.codereview.requests.ServerCaller;
 
 

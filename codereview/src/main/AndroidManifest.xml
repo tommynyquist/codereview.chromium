@@ -23,9 +23,16 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_code_review_login" />
         <activity
-            android:name=".phone.IssueDetailActivity"
+            android:name=".IssueDetailActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_issues" />
+            android:label="@string/title_activity_issues">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:host="codereview.chromium.org" android:scheme="https"/>
+            </intent-filter>
+        </activity>
         <activity
             android:name=".DiffActivity"
             android:configChanges="keyboardHidden|orientation|screenSize" />
