@@ -2,6 +2,7 @@ package com.chrome.codereview;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -20,7 +21,7 @@ import com.chrome.codereview.requests.ServerCaller;
 
 public class UserIssueActivityWithDrawer extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
-    private static final Class[] ISSUE_FRAGMENTS = new Class[] {IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
+    private static final Class[] ISSUE_FRAGMENTS = new Class[]{IncomingIssuesFragment.class, OutgoingIssuesFragment.class, CCIssuesFragment.class, RecentlyClosedIssuesFragment.class, HiddenIssuesFragment.class};
     private static final int REQUEST_LOGIN = 1;
 
     private class PhoneIssueSelectionListener implements BaseIssueListFragment.IssueSelectionListener {
@@ -52,9 +53,6 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
      */
     private NavigationDrawerFragment navigationDrawerFragment;
 
-    /**
-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
-     */
     private IssueDetailsFragment issueDetailsFragment;
 
     private SparseArray<BaseIssueListFragment> fragments = new SparseArray<BaseIssueListFragment>();
@@ -75,7 +73,7 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
         }
         getActionBar().setTitle(getResources().getStringArray(R.array.drawer_titles)[position]);
         fragmentManager.beginTransaction()
-                .replace(R.id.container, fragment)
+                .replace(R.id.container, fragment, position + "")
                 .commit();
     }
 
@@ -102,6 +100,10 @@ public class UserIssueActivityWithDrawer extends Activity implements NavigationD
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ServerCaller serverCaller = ServerCaller.from(this);
+        Fragment fr = getFragmentManager().findFragmentById(R.id.container);
+        if (fr != null) {
+            fragments.put(Integer.parseInt(fr.getTag()), (BaseIssueListFragment) fr);
+        }
         if (serverCaller.getState() != ServerCaller.State.OK) {
             startActivityForResult(new Intent(this, LoginActivity.class), REQUEST_LOGIN);
             return;

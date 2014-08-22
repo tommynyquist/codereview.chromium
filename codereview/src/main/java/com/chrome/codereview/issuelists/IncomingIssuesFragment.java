@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by sergeyv on 10/8/14.
  */
-public class IncomingIssuesFragment extends BaseIssueListFragment{
+public class IncomingIssuesFragment extends BaseIssueListFragment {
 
     @Override
     public Callable<List<Issue>> getLoadAction() {
