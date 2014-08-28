@@ -29,8 +29,17 @@ public class Reviewer {
         return name;
     }
 
+    public String email() {
+        return email;
+    }
+
     public Message.Decoration decoration() {
         return decoration;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public static List<Reviewer> from(JSONArray reviewerEmails, List<Message> issuesMessages) throws JSONException {
@@ -50,8 +59,4 @@ public class Reviewer {
         return reviewers;
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
 }

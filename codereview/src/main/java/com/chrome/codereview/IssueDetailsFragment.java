@@ -23,6 +23,7 @@ import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
 import com.chrome.codereview.model.PublishData;
+import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.TryBotResult;
 import com.chrome.codereview.utils.BaseFragment;
 import com.chrome.codereview.utils.CachedLoader;
@@ -32,6 +33,11 @@ import com.google.android.gms.auth.GoogleAuthException;
 import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Created by sergeyv on 18/4/14.
@@ -207,13 +213,32 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         return ((EditText) publishDialog.findViewById(id)).getText().toString();
     }
 
+    private String getReviewerString(String userText) {
+        StringTokenizer tokenizer = new StringTokenizer(userText, ", ");
+        List<String> mails = new ArrayList<String>(10);
+        Map<String, Reviewer> nameToReviewer = new HashMap<String, Reviewer>();
+        for (Reviewer reviewer: issue.reviewers()) {
+            nameToReviewer.put(reviewer.name(), reviewer);
+        }
+        while (tokenizer.hasMoreTokens()) {
+            String name = tokenizer.nextToken();
+            if (nameToReviewer.containsKey(name)) {
+                mails.add(nameToReviewer.get(name).email());
+            } else {
+                mails.add(name + "@chromium.org");
+            }
+        }
+
+        return TextUtils.join(", ", mails);
+    }
+
     @Override
     public void onClick(DialogInterface dialog, int which) {
         String prefix = dialog.BUTTON_NEUTRAL == which ? "lgtm.\n" : "";
         String message = prefix + getTextFromPublishDialog(R.id.publish_message);
         String subject = getTextFromPublishDialog(R.id.publish_subject);
         String cc = getTextFromPublishDialog(R.id.publish_cc);
-        String reviewers = getTextFromPublishDialog(R.id.publish_reviewers);
+        String reviewers = getReviewerString(getTextFromPublishDialog(R.id.publish_reviewers));
         PublishData publishData = new PublishData(issueId, message, subject, cc, reviewers);
         Bundle bundle = new Bundle();
         bundle.putParcelable(PUBLISH_DATA_ARG, publishData);
