@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BackgroundContainer">
+        <attr name="textOnLeftSwipe" format="string"/>
+        <attr name="textOnRightSwipe" format="string"/>
+    </declare-styleable>
+
+</resources>

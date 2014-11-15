@@ -4,8 +4,8 @@
     android:id="@+id/ptr_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    codereview:textOnLeftSwipe="@string/swipe_background_text_to_left"
-    codereview:textOnRightSwipe="@string/swipe_background_text_to_right">
+    codereview:textOnLeftSwipe="@string/hidden_issues_swipe"
+    codereview:textOnRightSwipe="@string/hidden_issues_swipe">
 
     <com.chrome.codereview.utils.SwipeListView
         android:id="@android:id/list"

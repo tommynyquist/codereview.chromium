@@ -1,17 +1,20 @@
 package com.chrome.codereview.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.TextUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by sergeyv on 21/4/14.
  */
-public class PatchSetFile {
+public class PatchSetFile implements Parcelable {
 
     public enum Status {
         ADDED("A"),
@@ -36,6 +39,26 @@ public class PatchSetFile {
         }
     }
 
+    public static final Parcelable.Creator<PatchSetFile> CREATOR = new Creator<PatchSetFile>() {
+
+        public PatchSetFile createFromParcel(Parcel source) {
+            int id = source.readInt();
+            Status status = fromString(source.readString());
+            String path = source.readString();
+            int numAdded = source.readInt();
+            int numRemoved = source.readInt();
+            List<Comment> comments = new ArrayList<Comment>();
+            source.readTypedList(comments, Comment.CREATOR);
+            return new PatchSetFile(id, status, path, numAdded, numRemoved, comments);
+        }
+
+        @Override
+        public PatchSetFile[] newArray(int size) {
+            return new PatchSetFile[size];
+        }
+
+    };
+
     private final int id;
     private final Status status;
     private final String path;
@@ -53,7 +76,7 @@ public class PatchSetFile {
         this.comments = comments;
 
         int numberOfDrafts = 0;
-        for (Comment comment: comments) {
+        for (Comment comment : comments) {
             numberOfDrafts += comment.isDraft() ? 1 : 0;
         }
         this.numberOfDrafts = numberOfDrafts;
@@ -69,10 +92,6 @@ public class PatchSetFile {
 
     public String path() {
         return path;
-    }
-
-    public int added() {
-        return numAdded;
     }
 
     public int numAdded() {
@@ -95,13 +114,34 @@ public class PatchSetFile {
         return this.comments.size() - numberOfDrafts;
     }
 
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(status.text);
+        dest.writeString(path);
+        dest.writeInt(numAdded);
+        dest.writeInt(numRemoved);
+        dest.writeTypedList(comments);
+    }
+
     public static PatchSetFile from(String path, JSONObject metaData) throws JSONException, ParseException {
         int id = metaData.getInt("id");
         int numAdded = metaData.getInt("num_added");
         int numRemoved = metaData.getInt("num_removed");
-        String statusString = metaData.getString("status");
+        Status status = fromString(metaData.getString("status"));
+        List<Comment> comments = Comment.from(metaData.getJSONArray("messages"));
+        return new PatchSetFile(id, status, path, numAdded, numRemoved, comments);
+    }
+
+    private static Status fromString(String statusString) {
         Status status = null;
-        for (Status s: Status.values()) {
+        for (Status s : Status.values()) {
             if (TextUtils.equals(s.text, statusString)) {
                 status = s;
                 break;
@@ -110,7 +150,6 @@ public class PatchSetFile {
         if (status == null) {
             throw new IllegalArgumentException("Unknown status: " + statusString);
         }
-        List<Comment> comments = Comment.from(metaData.getJSONArray("messages"));
-        return new PatchSetFile(id, status, path, numAdded, numRemoved, comments);
+        return status;
     }
 }

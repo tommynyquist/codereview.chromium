@@ -3,50 +3,34 @@
 
     <string name="app_name">Codereview</string>
     <string name="issue">Issue</string>
-    <string name="title_issue_detail">Issue Detail</string>
     <string name="title_activity_code_review_login">Login</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_issues">IssuesActivity</string>
-
     <string name="add_chromium_account_description">Please add your chromium account to proceed.</string>
     <string name="toast_auth_failed">Authentication Failed</string>
     <string name="trying_to_authenticate">Trying to authenticate with %1$s</string>
-    <string name="login">Login</string>
-
-    <string name="header_incoming_reviews">INCOMING REVIEWS</string>
-    <string name="header_outgoing_reviews">OUTGOING REVIEWS</string>
-    <string name="header_cced_reviews">ISSUES CCD TO</string>
-    <string name="header_recently_closed">RECENTLY CLOSED</string>
     <string name="ago">ago</string>
-    <string name="patchset">Patch Set %s:&#160;</string>
-    <string name="empty_message">&lt;empty message&gt;</string>
+    <string name="empty_message">&lt;empty message></string>
     <string name="comments_number">%s comments</string>
     <string name="drafts_number">%s drafts</string>
     <string name="draft_author">Draft</string>
-
     <string name="lines_added">+%s lines</string>
     <string name="lines_removed">-%s lines</string>
-
     <string name="messages">MESSAGES</string>
     <string name="patchsets">PATCH SETS</string>
     <string name="description">DESCRIPTION</string>
     <string name="publish_action">publish</string>
     <string name="publish_commit">check CQ bit</string>
-
     <string name="quick_lgtm">Quick LGTM</string>
     <string name="subject_hint">Subject</string>
     <string name="hint_message">Compose message</string>
-    <string name="publish_progress_message">Publishing your message</string>
     <string name="hint_reviewers">Reviewers</string>
     <string name="hint_cc">CC</string>
     <string name="new_comment">New comment at line %s</string>
-
-    <string name="issues_title">Issues for %s</string>
     <string name="reviewers">Reviewers:</string>
     <string name="fail_to_commit">Can\'t commit before issue was loaded.</string>
     <string name="skipping_lines">Skipping %s matching lines</string>
     <string name="try_bots_dialog_title">Try bots results</string>
-
     <string name="try_bot_success">Success</string>
     <string name="try_bot_failure">Failure</string>
     <string name="try_bot_running">Running</string>
@@ -58,36 +42,47 @@
     <string name="try_bots_pending">Pending on: </string>
     <string name="try_bots_skipped">Skipped on: </string>
     <string name="try_bots_success">Succeed on all bots</string>
-
+    <string name="swipe_background_text_to_left">WAIT TILL UPDATE!</string>
+    <string name="swipe_background_text_to_right">HIDE FOREVER!</string>
+    <string name="hidden_issues_swipe">BRING IT BACK!</string>
 
     <plurals name="year">
         <item quantity="one">year</item>
         <item quantity="other">years</item>
     </plurals>
-
     <plurals name="month">
         <item quantity="one">month</item>
         <item quantity="other">months</item>
     </plurals>
-
     <plurals name="week">
         <item quantity="one">week</item>
         <item quantity="other">weeks</item>
     </plurals>
-
     <plurals name="day">
         <item quantity="one">day</item>
         <item quantity="other">days</item>
     </plurals>
-
     <plurals name="hour">
         <item quantity="one">hour</item>
         <item quantity="other">hours</item>
     </plurals>
-
     <plurals name="minute">
         <item quantity="one">minute</item>
         <item quantity="other">minutes</item>
     </plurals>
+
+    <string-array name="drawer_titles">
+        <item>Incoming reviews</item>
+        <item>Outgoing reviews</item>
+        <item>CC\'d reviews</item>
+        <item>Recently closed</item>
+        <item>Hidden reviews</item>
+    </string-array>
+
+    <string name="navigation_drawer_title">Codereview for %s</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="login_button">Login</string>
+    <string name="fail_to_open_link">Sorry! App doesn\'t support such links</string>
 
 </resources>

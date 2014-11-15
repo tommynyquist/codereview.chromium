@@ -15,7 +15,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.Toast;
@@ -24,6 +23,7 @@ import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PatchSetFile;
 import com.chrome.codereview.model.PublishData;
+import com.chrome.codereview.model.Reviewer;
 import com.chrome.codereview.model.TryBotResult;
 import com.chrome.codereview.utils.BaseFragment;
 import com.chrome.codereview.utils.CachedLoader;
@@ -33,6 +33,11 @@ import com.google.android.gms.auth.GoogleAuthException;
 import org.apache.http.auth.AuthenticationException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Created by sergeyv on 18/4/14.
@@ -43,46 +48,33 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
     public static final int REQUEST_CODE_DIFF = 1;
 
     private static final int ISSUE_LOADER_ID = 0;
-    private static final int PUBLISH_LOADER_ID = 1;
     private static final int COMMIT_LOADER_ID = 2;
     private static final String PUBLISH_DATA_ARG = "publishData";
 
     private static class IssueLoader extends CachedLoader<Issue> {
 
         private int issueId;
+        private final PublishData publishData;
 
-        public IssueLoader(Context context, int issueId) {
+        public IssueLoader(Context context, int issueId, PublishData publishData) {
             super(context);
             this.issueId = issueId;
-        }
-
-        @Override
-        public Issue loadInBackground() {
-            return serverCaller().loadIssueWithPatchSetData(issueId);
-        }
-    }
-
-    private static class PublishLoader extends CachedLoader<Boolean> {
-
-        private PublishData publishData;
-
-        public PublishLoader(Context context, PublishData publishData) {
-            super(context);
             this.publishData = publishData;
         }
 
         @Override
-        public Boolean loadInBackground() {
+        public Issue loadInBackground() {
+            Issue issue = null;
             try {
-                serverCaller().publish(publishData);
-            } catch (IOException e) {
-                e.printStackTrace();
+                issue = serverCaller().publishAndReloadIssue(issueId, publishData);
             } catch (GoogleAuthException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             } catch (AuthenticationException e) {
                 e.printStackTrace();
             }
-            return true;
+            return issue;
         }
     }
 
@@ -120,7 +112,9 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         public Loader<Issue> onCreateLoader(int id, Bundle args) {
             enableMenuButtons(false);
             startProgress();
-            return new IssueLoader(getActivity(), issueId);
+
+            PublishData publishData = args != null ? (PublishData) args.getParcelable(PUBLISH_DATA_ARG) : null;
+            return new IssueLoader(getActivity(), issueId, publishData);
         }
 
         @Override
@@ -141,26 +135,6 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         public void onLoaderReset(Loader<Issue> loader) {
             issue = null;
             issueDetailsAdapter.setIssue(null);
-        }
-    };
-
-    private LoaderManager.LoaderCallbacks<Boolean> publishLoaderCallback = new LoaderManager.LoaderCallbacks<Boolean>() {
-
-        @Override
-        public Loader<Boolean> onCreateLoader(int id, Bundle args) {
-            enableMenuButtons(false);
-            startProgress();
-            return new PublishLoader(getActivity(), (PublishData) args.getParcelable(PUBLISH_DATA_ARG));
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Boolean> loader, Boolean v) {
-            enableMenuButtons(true);
-            getLoaderManager().restartLoader(ISSUE_LOADER_ID, null, issueLoaderCallback);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Boolean> loader) {
         }
     };
 
@@ -214,6 +188,9 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
 
     public void setIssueId(int issueId) {
         this.issueId = issueId;
+        if (issueId == -1) {
+            issueDetailsAdapter.setIssue(null);
+        }
         refresh();
     }
 
@@ -236,17 +213,36 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         return ((EditText) publishDialog.findViewById(id)).getText().toString();
     }
 
+    private String getReviewerString(String userText) {
+        StringTokenizer tokenizer = new StringTokenizer(userText, ", ");
+        List<String> mails = new ArrayList<String>(10);
+        Map<String, Reviewer> nameToReviewer = new HashMap<String, Reviewer>();
+        for (Reviewer reviewer: issue.reviewers()) {
+            nameToReviewer.put(reviewer.name(), reviewer);
+        }
+        while (tokenizer.hasMoreTokens()) {
+            String name = tokenizer.nextToken();
+            if (nameToReviewer.containsKey(name)) {
+                mails.add(nameToReviewer.get(name).email());
+            } else {
+                mails.add(name + "@chromium.org");
+            }
+        }
+
+        return TextUtils.join(", ", mails);
+    }
+
     @Override
     public void onClick(DialogInterface dialog, int which) {
         String prefix = dialog.BUTTON_NEUTRAL == which ? "lgtm.\n" : "";
         String message = prefix + getTextFromPublishDialog(R.id.publish_message);
         String subject = getTextFromPublishDialog(R.id.publish_subject);
         String cc = getTextFromPublishDialog(R.id.publish_cc);
-        String reviewers = getTextFromPublishDialog(R.id.publish_reviewers);
+        String reviewers = getReviewerString(getTextFromPublishDialog(R.id.publish_reviewers));
         PublishData publishData = new PublishData(issueId, message, subject, cc, reviewers);
         Bundle bundle = new Bundle();
         bundle.putParcelable(PUBLISH_DATA_ARG, publishData);
-        getLoaderManager().restartLoader(PUBLISH_LOADER_ID, bundle, this.publishLoaderCallback);
+        getLoaderManager().restartLoader(ISSUE_LOADER_ID, bundle, this.issueLoaderCallback);
     }
 
     @Override
@@ -258,7 +254,7 @@ public class IssueDetailsFragment extends BaseFragment implements DialogInterfac
         PatchSet patchSet = (PatchSet) patchSetObject;
         PatchSetFile file = (PatchSetFile) issueDetailsAdapter.getChild(groupPosition, childPosition);
         if (file != null) {
-            DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet.id(), file);
+            DiffActivity.startDiffActivity(this, REQUEST_CODE_DIFF, issueId, patchSet, file.id());
         } else {
             showTryBotResultsDialog(patchSet);
         }

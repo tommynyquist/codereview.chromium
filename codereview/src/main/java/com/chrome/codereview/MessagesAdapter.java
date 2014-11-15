@@ -68,7 +68,7 @@ public class MessagesAdapter extends LinearExpandableAdapter {
             rest = rest.substring((foundPatchSet.id() + "").length() + 1);
             for (PatchSetFile file : foundPatchSet.files()) {
                 if (rest.startsWith(file.path())) {
-                    DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issue.id(), foundPatchSet.id(), file);
+                    DiffActivity.startDiffActivity(fragment, IssueDetailsFragment.REQUEST_CODE_DIFF, issue.id(), foundPatchSet, file.id());
                     return;
                 }
             }

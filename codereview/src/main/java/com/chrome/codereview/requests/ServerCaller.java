@@ -3,32 +3,37 @@ package com.chrome.codereview.requests;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 
 import com.chrome.codereview.CodereviewApplication;
+import com.chrome.codereview.data.IssueStateProvider;
 import com.chrome.codereview.model.Comment;
 import com.chrome.codereview.model.Diff;
 import com.chrome.codereview.model.FileDiff;
 import com.chrome.codereview.model.Issue;
 import com.chrome.codereview.model.PatchSet;
 import com.chrome.codereview.model.PublishData;
-import com.chrome.codereview.model.UserIssues;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.loopj.android.http.PersistentCookieStore;
 
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -37,6 +42,8 @@ import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -47,6 +54,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -60,6 +69,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerCaller {
 
+    private static class NotFoundException extends IOException {
+    }
+
     public enum State {
         OK,
         NEEDS_ACCOUNT,
@@ -68,6 +80,9 @@ public class ServerCaller {
 
     public static final Uri BASE_URL = Uri.parse("https://codereview.chromium.org");
     public static final Uri SECONDARY_URL = Uri.parse("https://chromiumcodereview.appspot.com");
+    public static final String ACTION_UPDATE_ISSUE_MODIFICATION_TIME = "UPDATE_ISSUE_MODIFICATION_TIME";
+    public static final String EXTRA_ISSUE_ID = "ISSUE_ID";
+    public static final String EXTRA_MODIFICATION_TIME = "MODIFICATION_TIME";
 
     private static final String AUTH_COOKIE_NAME = "SACSID";
     private static final String XSRF_TOKEN_PREFERENCE = "ServerCaller_XSRF_TOKEN_PREFERENCE";
@@ -93,6 +108,8 @@ public class ServerCaller {
     private Account chromiumAccount;
     private State state;
     private Context context;
+    private HashSet<Integer> updatingIssues = new HashSet<Integer>();
+    private HashMap<Integer, Long> issueToModification = new HashMap<Integer, Long>();
 
     public ServerCaller(Context context) {
         this.context = context;
@@ -134,24 +151,26 @@ public class ServerCaller {
         return chromiumAccount.name;
     }
 
-    public UserIssues loadIssuesForUser(String accountName) {
+    public List<Issue> loadIssuesForUser(String accountName) {
         if (accountName == null) {
             return null;
         }
-        Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).withMessages().create()));
+        Future<List<Issue>> futureMineIssues = service.submit(createSearchCallable(new SearchOptions.Builder().owner(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
         Future<List<Issue>> futureCcIssues = service.submit(createSearchCallable(new SearchOptions.Builder().cc(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
         Future<List<Issue>> futureOnReviewIssues = service.submit(createSearchCallable(new SearchOptions.Builder().reviewer(accountName).closeState(SearchOptions.CloseState.OPEN).withMessages().create()));
         try {
             List<Issue> mineIssues = futureMineIssues.get();
             List<Issue> ccIssues = futureCcIssues.get();
             List<Issue> onReviewIssues = futureOnReviewIssues.get();
-            return new UserIssues(onReviewIssues, mineIssues, ccIssues);
+            mineIssues.addAll(ccIssues);
+            mineIssues.addAll(onReviewIssues);
+            return mineIssues;
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-        return new UserIssues(new ArrayList<Issue>(), new ArrayList<Issue>(), new ArrayList<Issue>());
+        return new ArrayList<Issue>();
     }
 
     public void tryToAuthenticate() throws UserRecoverableAuthException, GoogleAuthException, IOException, AuthenticationException {
@@ -163,8 +182,7 @@ public class ServerCaller {
     private void initChromiumAccount() {
         AccountManager accountManager = AccountManager.get(context);
         Account[] accounts = accountManager.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
-        String[] names = new String[accounts.length];
-        for (int i = 0; i < names.length; i++) {
+        for (int i = 0; i < accounts.length; i++) {
             if (accounts[i].name.endsWith(CHROMIUM_EMAIL)) {
                 chromiumAccount = accounts[i];
             }
@@ -246,8 +264,16 @@ public class ServerCaller {
         return null;
     }
 
-    public Issue loadIssueWithPatchSetData(final int issueId) {
+    public Issue publishAndReloadIssue(final int issueId, PublishData publishData) throws GoogleAuthException, IOException, AuthenticationException {
         Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").appendQueryParameter("messages", "true").build();
+        synchronized (updatingIssues) {
+            updatingIssues.add(issueId);
+        }
+        if (publishData != null) {
+            publish(publishData);
+        }
+
+        Issue issue = null;
         try {
             JSONObject jsonObject = executeGetJSONRequest(uri);
             JSONArray patchSetsJson = jsonObject.getJSONArray("patchsets");
@@ -263,17 +289,30 @@ public class ServerCaller {
             }
 
             List<PatchSet> patchSets = new ArrayList<PatchSet>();
-            for (Future<PatchSet> future: futures) {
+            for (Future<PatchSet> future : futures) {
                 PatchSet patchSet = future.get();
                 if (patchSet != null) {
                     patchSets.add(patchSet);
                 }
             }
-            return Issue.fromJSONObject(jsonObject, patchSets);
+            issue = Issue.fromJSONObject(jsonObject, patchSets);
+            Intent intent = new Intent(ACTION_UPDATE_ISSUE_MODIFICATION_TIME);
+            intent.putExtra(EXTRA_ISSUE_ID, issueId);
+            intent.putExtra(EXTRA_MODIFICATION_TIME, issue.lastModified().getTime());
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            synchronized (updatingIssues) {
+                updatingIssues.remove(issueId);
+                if (issueToModification.containsKey(issueId)) {
+                    long modificationTime = issueToModification.remove(issueId);
+                    long newModificationTime = issue != null ? issue.lastModified().getTime() : 0l;
+                    IssueStateProvider.updateIssueState(context, issue.id(), Math.max(modificationTime, newModificationTime));
+                }
+            }
         }
-        return null;
+        return issue;
     }
 
     private List<Issue> search(SearchOptions options) {
@@ -287,7 +326,7 @@ public class ServerCaller {
         return Collections.emptyList();
     }
 
-    private Callable<List<Issue>> createSearchCallable(final SearchOptions options) {
+    public Callable<List<Issue>> createSearchCallable(final SearchOptions options) {
         return new Callable<List<Issue>>() {
             @Override
             public List<Issue> call() throws Exception {
@@ -320,6 +359,19 @@ public class ServerCaller {
         executePost(uri, nameValuePairs);
     }
 
+    public boolean isClosedOrDeleted(int issueId) {
+        Uri uri = ISSUE_API_URL.buildUpon().appendPath(issueId + "").build();
+        try {
+            Issue issue = Issue.fromJSONObject(executeGetJSONRequest(uri));
+            return issue.isClosed();
+        } catch (NotFoundException e) {
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void executePost(Uri uri, List<? extends NameValuePair> parameters) throws IOException {
         HttpPost post = new HttpPost(uri.toString());
         UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
@@ -332,9 +384,27 @@ public class ServerCaller {
     }
 
     private String executeRequest(HttpUriRequest request) throws IOException {
+        request.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+        BasicHttpParams params = new BasicHttpParams();
+        HttpProtocolParams.setUserAgent(params, "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0");
+        request.setParams(params);
         HttpResponse response = httpClient.execute(request, httpContext);
-        String entity = EntityUtils.toString(response.getEntity());
-        return entity;
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            throw new NotFoundException();
+        }
+        HttpEntity entity = response.getEntity();
+        Header contentEncodingHeader = entity.getContentEncoding();
+        if (contentEncodingHeader != null) {
+            HeaderElement[] encodings = contentEncodingHeader.getElements();
+            for (int i = 0; i < encodings.length; i++) {
+                if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                    entity = new GzipDecompressingEntity(entity);
+                    break;
+                }
+            }
+        }
+        String entityString = EntityUtils.toString(entity);
+        return entityString;
     }
 
     private JSONObject executeGetJSONRequest(Uri uri) throws IOException, JSONException {
@@ -354,6 +424,16 @@ public class ServerCaller {
     private void clearToken() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         preferences.edit().remove(XSRF_TOKEN_PREFERENCE).apply();
+    }
+
+    public void updateIssueState(Issue issue, long modificationTime) {
+        synchronized (updatingIssues) {
+            if (updatingIssues.contains(issue.id())) {
+                issueToModification.put(issue.id(), modificationTime);
+                return;
+            }
+            IssueStateProvider.updateIssueState(context, issue.id(), modificationTime);
+        }
     }
 
 }

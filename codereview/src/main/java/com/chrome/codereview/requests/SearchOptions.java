@@ -31,13 +31,14 @@ public class SearchOptions {
         private boolean withMessages = false;
         private String reviewer;
         private String cc;
+        private int limit = 1000;
 
-        Builder owner(String owner) {
+        public Builder owner(String owner) {
             this.owner = owner;
             return this;
         }
 
-        Builder closeState(CloseState state) {
+        public Builder closeState(CloseState state) {
             if (state == null) {
                 throw new IllegalArgumentException();
             }
@@ -45,23 +46,28 @@ public class SearchOptions {
             return this;
         }
 
-        Builder withMessages() {
+        public Builder withMessages() {
             this.withMessages = true;
             return this;
         }
 
-        Builder reviewer(String reviewer) {
+        public Builder reviewer(String reviewer) {
             this.reviewer = reviewer;
             return this;
         }
 
-        Builder cc(String cc) {
+        public Builder cc(String cc) {
             this.cc = cc;
             return this;
         }
 
-        SearchOptions create() {
-            return new SearchOptions(owner, closeState, withMessages, reviewer, cc);
+        public Builder limit(int limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        public SearchOptions create() {
+            return new SearchOptions(owner, closeState, withMessages, reviewer, cc, limit);
         }
 
     }
@@ -71,13 +77,15 @@ public class SearchOptions {
     private final boolean withMessages;
     private final String reviewer;
     private final String cc;
+    private final int limit;
 
-    public SearchOptions(String owner, CloseState closeState, boolean withMessages, String reviewer, String cc) {
+    public SearchOptions(String owner, CloseState closeState, boolean withMessages, String reviewer, String cc, int limit) {
         this.owner = owner;
         this.closeState = closeState;
         this.withMessages = withMessages;
         this.reviewer = reviewer;
         this.cc = cc;
+        this.limit = limit;
     }
 
     public void fillParameters(Uri.Builder builder) {
@@ -101,6 +109,11 @@ public class SearchOptions {
             builder.appendQueryParameter("cc", cc);
         }
 
+        if (cc != null) {
+            builder.appendQueryParameter("cc", cc);
+        }
+
+        builder.appendQueryParameter("limit", limit + "");
     }
 
 }

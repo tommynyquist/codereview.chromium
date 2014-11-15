@@ -4,9 +4,9 @@ import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.Loader;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +23,7 @@ import com.chrome.codereview.utils.CachedLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by sergeyv on 29/4/14.
@@ -30,10 +31,10 @@ import java.util.ArrayList;
 public class DiffFragment extends BaseListFragment implements DiffAdapter.CommentActionListener {
 
     public static final int RESULT_REFRESH = 10;
-    public static final String COMMENTS_EXTRA = "COMMENTS_EXTRA";
-    public static final String ISSUE_ID_EXTRA = "ISSUE_ID_EXTRA";
-    public static final String PATCH_SET_ID_EXTRA = "PATCH_SET_ID_EXTRA";
-    public static final String PATCH_ID_EXTRA = "PATCH_ID_EXTRA";
+    private static final String COMMENTS_ARG = "COMMENTS_ARG";
+    private static final String ISSUE_ID_ARG = "ISSUE_ID_ARG";
+    private static final String PATCH_SET_ID_ARG = "PATCH_SET_ID_ARG";
+    private static final String PATCH_ID_ARG = "PATCH_ID_ARG";
 
     private static final int DIFF_LOADER_ID = 0;
     private static final int INLINE_DRAFT_LOADER_ID = 1;
@@ -123,8 +124,21 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            Comment comment =  Comment.createDraft(text.getText().toString(), line, left, messageId);
+            Comment comment = Comment.createDraft(text.getText().toString(), line, left, messageId);
             restartInlineDraftLoader(comment);
+        }
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && loadDiffInProgress) {
+            startProgress();
+            return;
+        }
+        if (isVisibleToUser && loadDiffInProgress) {
+            stopProgress();
+            return;
         }
     }
 
@@ -137,20 +151,26 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
     private int issueId;
     private int patchSetId;
     private int patchId;
-    private ArrayList<Comment> comments;
+    private List<Comment> comments;
     private DiffAdapter diffAdapter;
-
+    private boolean loadDiffInProgress;
     private LoaderManager.LoaderCallbacks<FileDiff> diffLoaderCallback = new LoaderManager.LoaderCallbacks<FileDiff>() {
 
         @Override
         public Loader<FileDiff> onCreateLoader(int id, Bundle args) {
-            startProgress();
+            loadDiffInProgress = true;
+            if (getUserVisibleHint()) {
+                startProgress();
+            }
             return new DiffLoader(getActivity(), issueId, patchSetId, patchId);
         }
 
         @Override
         public void onLoadFinished(Loader<FileDiff> loader, FileDiff data) {
-            stopProgress();
+            loadDiffInProgress = false;
+            if (getUserVisibleHint()) {
+                stopProgress();
+            }
             if (data == null) {
                 return;
             }
@@ -202,7 +222,8 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
 
             for (PatchSetFile file : data.files()) {
                 if (file.id() == patchId) {
-                    diffAdapter.resetComments(file.comments());
+                    comments = file.comments();
+                    diffAdapter.resetComments(comments);
                     return;
                 }
             }
@@ -214,19 +235,46 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
         }
     };
 
+    public void initialize(int issueId, PatchSet patchSet, int position) {
+        Bundle args = new Bundle();
+        args.putInt(ISSUE_ID_ARG, issueId);
+        args.putInt(PATCH_SET_ID_ARG, patchSet.id());
+        PatchSetFile patchSetFile = patchSet.files().get(position);
+        args.putInt(PATCH_ID_ARG, patchSetFile.id());
+        args.putParcelableArrayList(COMMENTS_ARG, new ArrayList<Parcelable>(patchSetFile.comments()));
+        this.setArguments(args);
+    }
+
+    @Override
+    public void setArguments(Bundle args) {
+        super.setArguments(args);
+        comments = args.getParcelableArrayList(COMMENTS_ARG);
+        issueId = args.getInt(ISSUE_ID_ARG, -1);
+        patchSetId = args.getInt(PATCH_SET_ID_ARG, -1);
+        patchId = args.getInt(PATCH_ID_ARG, -1);
+    }
+
     @Override
     protected int getLayoutRes() {
         return R.layout.fragment_diff;
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(DiffFragment.COMMENTS_ARG, new ArrayList<Parcelable>(comments));
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Intent intent = getActivity().getIntent();
-        comments = intent.getParcelableArrayListExtra(COMMENTS_EXTRA);
-        issueId = intent.getIntExtra(ISSUE_ID_EXTRA, -1);
-        patchSetId = intent.getIntExtra(PATCH_SET_ID_EXTRA, -1);
-        patchId = intent.getIntExtra(PATCH_ID_EXTRA, -1);
         View layout = super.onCreateView(inflater, container, savedInstanceState, false);
+        List<Comment> savedComments = null;
+        if (savedInstanceState != null) {
+            savedComments = savedInstanceState.getParcelableArrayList(COMMENTS_ARG);
+        }
+        if (savedComments != null) {
+            comments = savedComments;
+        }
         getLoaderManager().initLoader(DIFF_LOADER_ID, new Bundle(), this.diffLoaderCallback);
         return layout;
     }
@@ -271,7 +319,5 @@ public class DiffFragment extends BaseListFragment implements DiffAdapter.Commen
     public void writeComment(int line, boolean left) {
         showWriteCommentDialog("", "", line, left);
     }
-
-
 
 }

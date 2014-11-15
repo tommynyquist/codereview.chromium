@@ -2,12 +2,13 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
+        <item name="android:windowBackground">@color/background_holo_light</item>
         <item name="android:actionBarStyle">@style/ProgressBarActionBar</item>
         <item name="ptrHeaderStyle">@style/Widget.Custom.PtrHeader</item>
     </style>
 
     <style name="ProgressBarActionBar" parent="android:Widget.Holo.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">#324359</item>
+        <item name="android:background">@color/theme_blue</item>
         <item name="android:displayOptions">showTitle</item>
     </style>
 

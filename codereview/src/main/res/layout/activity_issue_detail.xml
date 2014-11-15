@@ -4,5 +4,5 @@
     android:name="com.chrome.codereview.IssueDetailsFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.chrome.codereview.phone.IssueDetailActivity"
+    tools:context="com.chrome.codereview.IssueDetailActivity"
     tools:layout="@android:layout/list_content" />

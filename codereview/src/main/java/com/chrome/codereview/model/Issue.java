@@ -25,7 +25,7 @@ public class Issue {
     private final boolean closed;
     private final List<Message> messages;
     private final List<Reviewer> reviewers;
-    private final Date lastModified;
+    private Date lastModified;
     private final List<PatchSet> patchSets;
     private final String ccd;
     private final int id;
@@ -87,6 +87,9 @@ public class Issue {
         return result;
     }
 
+    public void setLastModified(long time) {
+        this.lastModified = new Date(time);
+    }
 
     public String subject() {
         return subject;
